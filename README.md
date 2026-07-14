@@ -89,19 +89,14 @@ Everything below is configurable from **Appearance → Customize** in wp-admin �
 >
 > No warranty is implied or provided — see the notes at the top of this README.
 
-
-
 <p align="center" style="margin-top: 70px">
     <img src=".github/images/me.png" alt="" width="300">
-  </a>
 </p>
-<p>
-    <div style="font-size: 40px; text-align: center">Lasse Edsvik</div>
-    <br>
-    <div style="font-size: 30px; text-align: center"><a href="https://lasseedsvik.se" target="_blank">lasseedsvik.se</a></div>
-    <br>
-    <div style="font-size: 30px; text-align: center"><a href="mailto:lasse@lasseedsvik.se">lasse@lasseedsvik.se</a></div>
-</p>
+<h2 align="center" style="margin-top: 20px; font-size: 32px; font-weight: bold;">
+  Lasse Edsvik <br> <a href="https://lasseedsvik.se" target="_blank">lasseedsvik.se</a> &middot; <a href="mailto:lasse@lasseedsvik.se">lasse@lasseedsvik.se</a>
+</h2>
+
+
 <p align="center" style="margin-top: 70px">
   <a href="https://www.buymeacoffee.com/lasseedsvik">
     <img src=".github/images/buymeacoffee.png" alt="Buy me a coffee" width="500">
