@@ -1,0 +1,2616 @@
+/**
+ * WooPaca – WooCommerce stylesheet
+ * ---------------------------------------------------------------
+ * This file is deliberately kept separate from the theme's style.css.
+ * It's only loaded when WooCommerce is active (see inc/woocommerce.php)
+ * and contains everything related to the store: product list, product
+ * cards, product page, attribute selector, and the cart/account icons
+ * in the header.
+ *
+ * Colors/radii reuse the same CSS variables as the rest of the theme
+ * (see :root in style.css). --wc-dark is defined locally here since
+ * it's only used on the store pages.
+ */
+
+:root {
+    --wc-dark: #0d0d0d;
+    --button-bg: rgb(55, 100, 130);
+    --attribute-box: var(--button-bg);
+    --section-eyebrow: rgb(55, 100, 130);
+    --border-color: rgb(55, 100, 130);
+    --sale-bg: #d1a12e;
+
+    --radius-lg: 4px;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Star rating (.star-rating). WooCommerce normally draws the stars
+   with its own icon font loaded via the plugin CSS – since we disable
+   WooCommerce's default stylesheet (see inc/woocommerce.php), that
+   font never loads, so we draw the stars ourselves using plain
+   Unicode characters instead. Same technique as WooCommerce: a
+   grayed-out "track" of 5 stars at the bottom, and a yellow layer on
+   top that's clipped to the rating's width (the span element's inline
+   style="width:X%").
+   ─────────────────────────────────────────────────────────────── */
+.star-rating {
+    position: relative;
+    display: inline-block;
+    width: 5.4em;
+    height: 1.2em;
+    line-height: 1.2em;
+    font-size: 14px;
+    letter-spacing: .2em;
+    overflow: hidden;
+    vertical-align: middle;
+}
+
+.star-rating::before {
+    content: "\2605\2605\2605\2605\2605";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    color: #e5e7eb;
+}
+
+.star-rating span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    overflow: hidden;
+    font-size: 0;
+    color: transparent;
+}
+
+.star-rating span::before {
+    content: "\2605\2605\2605\2605\2605";
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 14px;
+    letter-spacing: .2em;
+    color: var(--action-yellow, #d1a12e);
+    white-space: nowrap;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Known WooCommerce bug: <ul class="products"> automatically gets a
+   clearfix via ::before/::after (content:"";display:table;). In
+   combination with CSS Grid (see below), those pseudo-elements create
+   an extra, empty "ghost cell" that shifts the whole product grid by
+   one step. We explicitly reset them before the grid is applied.
+   ─────────────────────────────────────────────────────────────── */
+ul.products::before,
+ul.products::after,
+ul.products li.product::before,
+ul.products li.product::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   WooCommerce notices ("X has been added to your cart", error
+   messages, etc.). Flat, modern style without a filled background:
+   icon + text in the message's own color with a thin underline
+   accent. WooCommerce focuses the element via JS for accessibility,
+   which would otherwise show the browser's clunky default blue focus
+   ring – we replace it with a subtle indicator of our own. The "View
+   cart" button is hidden as requested.
+   ─────────────────────────────────────────────────────────────── */
+.woocommerce-message,
+.woocommerce-error,
+.woocommerce-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    margin: 32px 0 24px;
+    padding: 0 0 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid currentColor;
+    border-radius: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    outline: none;
+    animation: woopaca-fade-in .35s ease both;
+}
+
+.woocommerce-message li,
+.woocommerce-error li,
+.woocommerce-info li {
+    list-style: none;
+}
+
+.woocommerce-message {
+    color: #15803d;
+}
+
+.woocommerce-error {
+    color: var(--error);
+}
+
+.woocommerce-info {
+    color: var(--primary);
+}
+
+.woocommerce-message::before,
+.woocommerce-error::before,
+.woocommerce-info::before {
+    font-family: 'Material Symbols Outlined';
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.woocommerce-message::before {
+    content: "check_circle";
+}
+
+.woocommerce-error::before {
+    content: "error";
+}
+
+.woocommerce-info::before {
+    content: "info";
+}
+
+/* Hide the "View cart" button in the added-to-cart message */
+.woocommerce-message .button.wc-forward,
+.woocommerce-error .button.wc-forward,
+.woocommerce-info .button.wc-forward {
+    display: none;
+}
+
+/* ─── Products on the homepage ───────────────────────────────── */
+.front-shop-section {
+    padding: 24px 0 64px;
+}
+
+.front-shop-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.front-shop-heading h1 {
+    margin-bottom: 0;
+}
+
+.section-eyebrow {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 6px 20px;
+    color: #376482;
+    font-family: "Inter", sans-serif;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: .13em;
+    border-radius: 4px;
+    border: 2px solid #376482;
+}
+
+.front-shop-heading h2 {
+    margin-bottom: 0;
+    font-size: 28px;
+    text-transform: uppercase;
+    letter-spacing: -.01em;
+}
+
+.front-shop-link {
+    white-space: nowrap;
+}
+
+.front-shop-link-header {
+    margin-top: 30px;
+}
+
+/* ─── Butikslayout: filterpanel + produktlista ──────────────── */
+.shop-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 40px 0 80px;
+    align-items: start;
+}
+
+@media (min-width: 960px) {
+    .shop-layout {
+        grid-template-columns: 260px 1fr;
+    }
+}
+
+/* Brief dimmed/non-interactive state while a filter change is being
+   fetched via AJAX (see assets/js/shop-filter-ajax.js), so a click
+   doesn't feel like it did nothing while the request is in flight. */
+.shop-layout.shop-filter-loading {
+    opacity: .6;
+    pointer-events: none;
+    transition: opacity .15s ease;
+}
+
+.shop-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.woocommerce-products-header__title {
+    margin-bottom: 8px;
+}
+
+.woocommerce-breadcrumb {
+    font-size: 16px;
+    color: var(--on-surface-variant, #6b7280);
+}
+
+.woocommerce-breadcrumb a {
+    color: var(--on-surface-variant, #6b7280);
+    text-decoration: none;
+}
+
+.woocommerce-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.category-banner-image {
+    margin-bottom: 24px;
+    border-radius: var(--radius-lg, 4px);
+    overflow: hidden;
+}
+
+.category-banner-image img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1376 / 768;
+    object-fit: cover;
+}
+
+.woocommerce-products-header .term-description {
+    max-width: 720px;
+    margin-bottom: 24px;
+    color: var(--on-surface-variant, #6b7280);
+    line-height: 1.6;
+}
+
+/* ─── Produktlista (arkiv/kategori) ─────────────────────────── */
+ul.products {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: var(--gutter, 28px) !important;
+    list-style: none !important;
+    margin: 40px 0 0 !important;
+    padding: 0 !important;
+}
+
+@media (min-width: 480px) {
+    ul.products {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (min-width: 900px) {
+    ul.products {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (min-width: 1600px) {
+    ul.products {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* The shop's product list has a filter panel next to it (see
+   .shop-layout), so the available space for the cards is
+   significantly narrower than the whole browser window. The
+   breakpoints above are set based on window width and therefore give
+   too many/small columns here – we limit it to 2 columns on smaller
+   screens and 3 columns from 1200px and up (i.e. normal desktop
+   width, including the site's own max width of 1440px) so the shop
+   page shows three products wide by default.
+   NOTE: !important is used throughout here because WooCommerce (from
+   version 8.6+) can load its own grid CSS for ul.products if a plugin
+   or a caching solution happens to reactivate it – without
+   !important, that CSS could otherwise win and squeeze the cards
+   together again. */
+.shop-content ul.products {
+    grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 560px) {
+    .shop-content ul.products {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (min-width: 1200px) {
+    .shop-content ul.products {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+ul.products li.product-card-item {
+    width: 100% !important;
+    margin: 0 !important;
+    float: none !important;
+    list-style: none;
+}
+
+.woocommerce-result-count,
+.woocommerce-ordering {
+    margin: 0 0 16px;
+}
+
+/* Row holding "Showing X of Y results" on the left and the sorting +
+   page-select dropdowns grouped together on the right (see
+   shop_toolbar_right() in inc/woocommerce.php). */
+.shop-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.shop-toolbar .woocommerce-result-count,
+.shop-toolbar .woocommerce-ordering {
+    margin: 0;
+}
+
+.shop-toolbar-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.woocommerce-ordering select.orderby {
+    display: inline-block;
+    padding: 10px 36px 10px 16px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #374151;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.woocommerce-ordering select.orderby:hover {
+    border-color: #9ca3af;
+    background-color: #fff;
+}
+
+.woocommerce-ordering select.orderby:focus {
+    border-color: #6b7280;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, .15);
+}
+
+.woocommerce-ordering select.orderby option {
+    background-color: #fff;
+    color: #374151;
+}
+
+/* ─── Numbered pagination (bottom of shop/category listings) ──── */
+.woocommerce-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.woocommerce-pagination .page-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    list-style: none;
+}
+
+.woocommerce-pagination .page-numbers li {
+    display: flex;
+}
+
+.woocommerce-pagination .page-numbers a,
+.woocommerce-pagination .page-numbers span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+    border-radius: var(--radius-default, 4px);
+    border: 1px solid #d1d5db;
+    color: #374151;
+    font-size: 14px;
+    text-decoration: none;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.woocommerce-pagination .page-numbers a:hover {
+    border-color: var(--button-bg);
+    color: var(--button-bg);
+    background-color: #f9fafb;
+}
+
+.woocommerce-pagination .page-numbers .current {
+    background-color: var(--button-bg);
+    border-color: var(--button-bg);
+    color: #fff;
+    font-weight: 700;
+}
+
+.woocommerce-pagination .page-numbers .dots {
+    border-color: transparent;
+}
+
+/* ─── Produktkort ────────────────────────────────────────────── */
+.product-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.product-card .onsale {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--sale-bg);
+    color: #fff;
+    font-size: 16px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--radius-default, 4px);
+    z-index: 1;
+}
+
+.product-card {
+    position: relative;
+    background: #fff;
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid #eef0f2;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+    transition: box-shadow .2s ease, transform .2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    box-shadow: 0 16px 32px rgba(16, 24, 40, .09);
+    transform: translateY(-4px);
+}
+
+.product-card img {
+    width: 100%;
+    aspect-ratio: 1 / 1.1;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 18px;
+    background: #f3f4f6;
+}
+
+.product-card .product-name {
+    font-size: 22px;
+    margin-bottom: 4px;
+}
+
+.product-card .star-rating {
+    margin-bottom: 8px;
+}
+
+.product-card .price {
+    display: block;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--primary, #0d0d0d);
+    margin: 4px 0 18px;
+}
+
+.product-card .price del {
+    opacity: .5;
+    font-weight: 400;
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+.product-card .price ins {
+    text-decoration: none;
+}
+
+.product-card-footer {
+    margin-top: auto;
+}
+
+.product-card-footer .button,
+.product-card-footer .add_to_cart_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--button-bg);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: var(--radius-default, 4px);
+    text-decoration: none;
+    text-align: center;
+}
+
+.product-card-footer .button:hover,
+.product-card-footer .add_to_cart_button:hover {
+    opacity: .9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, .15);
+}
+
+.product-card-footer .button:active,
+.product-card-footer .add_to_cart_button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+}
+
+/* While WooCommerce adds the product to the cart via AJAX. */
+.product-card-footer .button.loading,
+.product-card-footer .add_to_cart_button.loading {
+    opacity: .7;
+    pointer-events: none;
+    position: relative;
+    color: transparent;
+}
+
+.product-card-footer .button.loading::after,
+.product-card-footer .add_to_cart_button.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid rgba(255, 255, 255, .4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: woopaca-spin .6s linear infinite;
+}
+
+.product-card-footer .added_to_cart {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    margin: 8px auto 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #15803d;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    animation: woopaca-fade-in .3s ease both;
+}
+
+.product-card-footer .added_to_cart::before {
+    font-family: 'Material Symbols Outlined';
+    content: "check_circle";
+    font-size: 16px;
+}
+
+/* ─── Produktsida ────────────────────────────────────────────── */
+/* NOTE: wc_product_class() always adds a class called exactly
+   "product" – both on the product page's root <div> AND on every
+   <li> in the shop's product grid (content-product.php). If we had
+   only written ".woocommerce-main .product", that rule would
+   therefore have leaked into the product cards in the shop too and
+   split each card into its own 1fr/1fr grid (which squeezed the
+   cards down to half width). By requiring div.product we only hit
+   the product page's wrapper, never the <li> cards in the product
+   list. */
+.woocommerce-main div.product {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+    padding: 40px 0 80px !important;
+    position: relative;
+}
+
+@media (min-width: 1024px) {
+    .woocommerce-main div.product {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 64px !important;
+    }
+}
+
+/* WooCommerce prints the "Sale" badge (.onsale) and the image
+   gallery as separate siblings inside div.product, in that order –
+   since div.product is a CSS grid, the badge used to become its own
+   grid item (landing in the image's own column/row and pushing the
+   real gallery over), instead of visually sitting on top of the
+   photo like a normal sale sticker. Taking it out of grid flow with
+   position:absolute (anchored to div.product, which is
+   position:relative above) fixes both problems at once: it stops
+   disrupting the grid, and lands it in the image's top-left corner,
+   matching where the gallery itself starts. */
+.woocommerce-main div.product>.onsale {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    background: var(--sale-bg);
+    color: #fff;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 5px 15px;
+    border-radius: var(--radius-default, 4px);
+}
+
+/* CSS Grid gives every column an implicit "min-width: auto", which
+   means a column never shrinks below its own content's natural width
+   (e.g. a long title, price, or a variation dropdown in .summary). In
+   a grid with only two 1fr columns, that instead forces THE OTHER
+   column (the product image) to shrink to make room – that's what
+   squeezed the gallery. By zeroing out min-width here, both columns
+   are allowed to shrink evenly according to 1fr/1fr as intended. */
+.woocommerce-main div.product>* {
+    min-width: 0;
+}
+
+/* The product tabs (.woocommerce-tabs) and "Related products"
+   (.related.products) sit as direct siblings of the image gallery and
+   .summary inside div.product – i.e. the same 2-column grid. Without
+   this rule, CSS Grid lines them up as a third row and splits THEM
+   into their own columns (tabs on the left, related products on the
+   right) instead of stacking them full-width. We therefore force both
+   to span the entire grid (column 1 to the last column). */
+.woocommerce-main div.product>.woocommerce-tabs,
+.woocommerce-main div.product>.related.products {
+    grid-column: 1 / -1;
+}
+
+/* ─── Product image gallery + zoom on hover ─────────────────────
+   WooCommerce's built-in zoom feature (zoom.js, enabled via
+   add_theme_support('wc-product-gallery-zoom')) adds an enlarged copy
+   of the image (.zoomImg) absolutely positioned on top of the
+   original on hover, and moves it based on the mouse pointer to
+   create a magnifying-glass-like effect. This requires the container
+   to have position:relative + overflow:hidden so the enlarged image
+   is clipped to the right area – otherwise it just renders as a
+   regular, unclipped "copy" of the image sticking out below, which is
+   exactly what looked wrong before this CSS existed. */
+/* The trigger link is inserted as a sibling of .woocommerce-product-
+   gallery__wrapper, inside the outer .woocommerce-product-gallery
+   container – NOT inside .woocommerce-product-gallery__image. It was
+   previously positioning itself relative to a further-up ancestor
+   (whichever was the nearest positioned element on the page), which
+   is why it ended up pinned to the corner of the whole page instead
+   of the image. Making the outer wrapper the positioning context
+   fixes that. */
+.woocommerce-product-gallery {
+    position: relative;
+}
+
+.woocommerce-product-gallery__wrapper {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.woocommerce-product-gallery__image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #eef0f2;
+    background: #fafafa;
+}
+
+/* WooCommerce's built-in "open lightbox" trigger. Core WooCommerce
+   inserts this as a literal 🔍 emoji character as the link's text
+   content (not an icon font or image) – browsers/WordPress then
+   render that emoji character as its own little icon, which always
+   showed up as a generic blue magnifying glass no matter what we did
+   here. We shrink that text to nothing (font-size/line-height: 0) and
+   add our own Material Symbols "search" icon via ::before instead, so
+   it matches the same icon used everywhere else in the theme (header
+   search, price filter, etc.). */
+.woocommerce-product-gallery__trigger {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 0;
+    line-height: 0;
+    overflow: hidden;
+}
+
+.woocommerce-product-gallery__trigger::before {
+    font-family: 'Material Symbols Outlined';
+    content: "search";
+    font-size: 24px;
+    line-height: 1;
+}
+
+.woocommerce-product-gallery__image a {
+    display: block;
+}
+
+/* !important + a broad selector because WooCommerce's hover-zoom
+   script (zoom.js) sets its own inline `cursor` style at runtime,
+   and it's not consistent about which exact element (the image, the
+   link, or its own overlay) that inline style ends up on. Covering
+   the container, the link, the image, and any element zoom.js adds
+   inside guarantees our cursor wins no matter where it landed. */
+.woocommerce-product-gallery__image,
+.woocommerce-product-gallery__image a,
+.woocommerce-product-gallery__image img,
+.woocommerce-product-gallery__image * {
+    cursor: zoom-in !important;
+}
+
+/* Belt-and-braces: WooCommerce's hover-zoom (zoom.js) creates a
+   separate "zoomed in" preview image (.zoomImg) on mouseenter. In
+   some setups it ends up appended outside of .woocommerce-product-
+   gallery__image entirely (e.g. directly on <body>) to avoid being
+   clipped, in which case it doesn't inherit the rule above at all –
+   that's what caused the cursor to flash correctly for a moment and
+   then fall back to the browser default as soon as the pointer moved
+   onto that preview image. Targeting the class directly, with no
+   ancestor requirement, catches it no matter where it lives in the
+   DOM.
+*/
+img.zoomImg {
+    cursor: zoom-in !important;
+}
+
+img.zoomImg:hover {
+    cursor: zoom-in !important;
+}
+
+.woocommerce-product-gallery__image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.woocommerce-product-gallery__image .zoomImg {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: auto !important;
+    max-width: none !important;
+    background-color: #fff;
+    border-radius: 10px;
+}
+
+/* Thumbnails below the main image – the selected image is marked
+   with the theme's accent color instead of a plain black border, for
+   a bit of energy in the interface. */
+.flex-control-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.flex-control-thumbs li {
+    width: 72px;
+}
+
+.flex-control-thumbs img {
+    display: block;
+    width: 100%;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: .55;
+    border: 2px solid transparent;
+    transition: opacity .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.flex-control-thumbs img:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.flex-control-thumbs img.flex-active {
+    opacity: 1;
+    border-color: var(--border-accent-color);
+}
+
+.product-info .star-rating {
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+.product-info .star-rating span::before {
+    font-size: 18px;
+}
+
+.product-info-price {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 0 16px 20px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary, #0d0d0d);
+}
+
+.product-info-price del {
+    opacity: .5;
+    font-weight: 400;
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.product-info-price ins {
+    text-decoration: none;
+}
+
+.woocommerce-product-details__short-description {
+    margin-bottom: 32px;
+    line-height: 1.6;
+    color: var(--on-surface-variant, #424750);
+}
+
+/* ─── Produktflikar (Beskrivning / Ytterligare information / Recensioner) ─── */
+.woocommerce-tabs {
+    margin: 24px 0 80px;
+}
+
+.woocommerce-tabs ul.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    list-style: none;
+    margin: 0 0 32px !important;
+    padding: 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.woocommerce-tabs ul.tabs li {
+    margin: 0;
+}
+
+.woocommerce-tabs ul.tabs li a {
+    display: inline-block;
+    padding: 14px 20px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.woocommerce-tabs ul.tabs li.active a,
+.woocommerce-tabs ul.tabs li a:hover {
+    color: var(--wc-dark);
+    border-bottom-color: var(--wc-dark);
+}
+
+.woocommerce-tabs .woocommerce-Tabs-panel {
+    max-width: 760px;
+    line-height: 1.7;
+    color: #374151;
+}
+
+.woocommerce-tabs .woocommerce-Tabs-panel h2 {
+    font-size: 22px !important;
+    font-weight: 800;
+    color: var(--wc-dark) !important;
+    margin-bottom: 20px;
+}
+
+.woocommerce-Tabs-panel table.shop_attributes {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    /* The tab panel also carries WooCommerce's own "entry-content"
+       class (reused from blog-post styling for consistent typography),
+       which triggers the theme's blog table design further up in this
+       file (background/border colored with --primary). That's meant
+       for tables inside blog posts, not this attribute table, so we
+       explicitly reset it here. */
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-default, 4px);
+    overflow: hidden;
+}
+
+.woocommerce-Tabs-panel table.shop_attributes th,
+.woocommerce-Tabs-panel table.shop_attributes td {
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid var(--outline);
+    border-right: none;
+    text-align: left;
+    font-size: 14px;
+    vertical-align: middle;
+    background: none;
+}
+
+.woocommerce-Tabs-panel table.shop_attributes tr:last-child th,
+.woocommerce-Tabs-panel table.shop_attributes tr:last-child td {
+    border-bottom: none;
+}
+
+.woocommerce-Tabs-panel table.shop_attributes th {
+    width: 200px;
+    background: var(--surface-container-low);
+    color: var(--on-surface-variant, #6b7280);
+    font-weight: 600;
+}
+
+.woocommerce-Tabs-panel table.shop_attributes tr:nth-child(even) td {
+    background: none;
+}
+
+/* WooCommerce wraps each attribute value in a <p>, whose default
+   browser margin pushes the text off-center within the row even
+   though vertical-align: middle is set above. */
+.woocommerce-Tabs-panel table.shop_attributes td p {
+    margin: 0;
+}
+
+/* Recensioner */
+#reviews .commentlist {
+    list-style: none;
+    margin: 0 0 32px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+#reviews .comment_container {
+    display: flex;
+    gap: 16px;
+}
+
+#reviews .comment-text {
+    flex: 1;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#reviews .avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+}
+
+#reviews .woocommerce-review__author {
+    font-weight: 700;
+    color: var(--wc-dark);
+    margin-right: 8px;
+}
+
+#reviews .woocommerce-review__dash {
+    color: #9ca3af;
+    margin-right: 8px;
+}
+
+#reviews .star-rating {
+    margin: 6px 0;
+}
+
+#review_form_wrapper h3 {
+    font-size: 20px !important;
+    font-weight: 800;
+    color: var(--wc-dark) !important;
+    margin-bottom: 16px;
+}
+
+.comment-form-rating label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.comment-form-rating p.stars {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.comment-form-rating p.stars a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    text-decoration: none;
+    /* The real text ("1 out of 5 stars" etc.) remains in the DOM for
+       screen readers but is made invisible here – we draw our own
+       star icon instead via ::before below. */
+    font-size: 0;
+    color: transparent;
+}
+
+/* Base state: all stars gray (nothing hovered, nothing selected yet). */
+.comment-form-rating p.stars a::before {
+    content: "\2605";
+    font-size: 28px;
+    line-height: 1;
+    color: #d1d5db;
+    transition: color .1s ease;
+}
+
+/* CSS can only select LATER siblings (via ~), not earlier ones. So
+   instead of trying to color "the one being hovered and everything
+   before it" gold, we do the opposite: when hovering the row, ALL
+   stars are colored gold, and then only the ones that come AFTER (to
+   the right of) the one being pointed at are grayed out – this gives
+   exactly the same result (1..N gold, N+1..5 gray) but can actually
+   be expressed in CSS, with star 1 on the far left as it should be. */
+.comment-form-rating p.stars:hover a::before {
+    color: var(--action-yellow, #d1a12e);
+}
+
+.comment-form-rating p.stars a:hover~a::before {
+    color: #d1d5db;
+}
+
+/* The same logic, permanently, for the rating that's actually
+   selected (the "active" class is set by WooCommerce on click), when
+   not hovering. */
+.comment-form-rating p.stars:has(a.active):not(:hover) a::before {
+    color: var(--action-yellow, #d1a12e);
+}
+
+.comment-form-rating p.stars:has(a.active):not(:hover) a.active~a::before {
+    color: #d1d5db;
+}
+
+.comment-form-comment label,
+.comment-form-author label,
+.comment-form-email label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 6px;
+}
+
+#reviews .form-submit {
+    margin-top: 16px;
+}
+
+/* ─── Attribute boxes (replaces dropdown) ────────────────────── */
+.dm-variation-buttons {
+    margin-bottom: 24px;
+}
+
+.dm-attribute-group {
+    margin-bottom: 24px;
+}
+
+/* Cascading reveal: attributes further down the chain are hidden
+   until every attribute above them has a selection (see
+   assets/js/variations.js). Using display:none rather than
+   visibility so hidden groups don't take up space or remain
+   keyboard-focusable/tabbable while collapsed. */
+.dm-attribute-group.dm-attribute-hidden {
+    display: none;
+}
+
+.dm-attribute-group:not(.dm-attribute-hidden) {
+    animation: woopaca-fade-in .3s ease both;
+}
+
+.dm-attribute-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.dm-attribute-label {
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-size: 13px;
+    color: var(--wc-dark);
+}
+
+.dm-attribute-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.dm-attribute-option {
+    display: block;
+}
+
+.dm-attribute-radio {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.dm-attribute-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 14px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-default, 4px);
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+}
+
+/* The product page's SIZE/COLOR selector uses .dm-attribute-box on
+   <label> elements (see variable.php), but the shop-sidebar filter
+   (see render_shop_attribute_filter() in inc/woocommerce.php) reuses
+   the same class on real <a> links, which otherwise pick up the
+   global "a { text-decoration: underline; }" style. Scoped to just
+   the anchor version so the product page boxes are unaffected. */
+a.dm-attribute-box {
+    font-weight: normal;
+    text-decoration: none;
+}
+
+.dm-attribute-box:active {
+    transform: scale(.95);
+}
+
+.dm-attribute-radio:focus-visible+.dm-attribute-box {
+    outline: 2px solid var(--action-yellow, #d1a12e);
+    outline-offset: 2px;
+}
+
+.dm-attribute-box:hover {
+    border-color: var(--wc-dark);
+}
+
+/* Combinations that WooCommerce has worked out don't exist (e.g. a
+   Size+Color combination that has no variant of its own) – see
+   assets/js/variations.js. */
+.dm-attribute-radio:disabled+.dm-attribute-box {
+    color: #d1d5db;
+    border-color: #f0f1f3;
+    background: #fafafa;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.dm-attribute-radio:disabled+.dm-attribute-box:hover {
+    border-color: #f0f1f3;
+}
+
+/* Driven explicitly by assets/js/variations.js (updateSelectedVisual)
+   rather than relying only on :checked, since a radio's checked
+   state can be set programmatically (page reload with sticky/default
+   values, or right after a click) in ways that don't always trigger
+   a fresh style recalculation for :checked-based sibling selectors
+   in every browser. This is the primary indicator; the :checked rule
+   below is kept as a harmless fallback for the common case where it
+   also works.
+
+   !important is required here: .dm-attribute-radio:disabled+
+   .dm-attribute-box (two classes + one pseudo-class = specificity
+   0,3,0) is MORE specific than this two-class selector (0,2,0), so
+   without !important the "unavailable/grayed out" look silently won
+   over "selected" whenever an option ended up both selected AND
+   marked unavailable by the availability check – regardless of which
+   rule came later in the file. A value the visitor has chosen must
+   never look disabled. */
+.dm-attribute-box.dm-attribute-box--selected {
+    background: var(--attribute-box) !important;
+    border-color: var(--attribute-box) !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+
+/* Placed after the :disabled rules on purpose: :checked and
+   :disabled are both single pseudo-classes, so they carry the exact
+   same CSS specificity. Whichever rule appears LAST in the file wins
+   any tie. A value the visitor has actively selected should never be
+   rendered as "unavailable" – putting :checked last guarantees the
+   selected look always takes priority. */
+.dm-attribute-radio:checked+.dm-attribute-box {
+    background: var(--attribute-box);
+    border-color: var(--attribute-box);
+    color: #fff;
+    text-decoration: none;
+}
+
+.reset_variations {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+/* Real <select> fields: visually hidden but still accessible to
+   screen readers and keyboard navigation (not display:none). */
+.dm-hidden-selects {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ─── Add to cart button on the product page ─────────────────── */
+.single_variation_wrap {
+    margin-top: 8px;
+}
+
+.quantity {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 16px;
+}
+
+.quantity .qty {
+    width: 80px;
+    padding: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: var(--radius-default, 4px);
+    font-family: inherit;
+    font-size: 16px;
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+
+.quantity .qty:hover {
+    border-color: #9ca3af;
+}
+
+.quantity .qty:focus {
+    border-color: #6b7280;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, .15);
+    background-color: #fff;
+}
+
+.single_add_to_cart_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--wc-dark);
+    color: #fff;
+    padding: 20px 24px;
+    border-radius: var(--radius-default, 4px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.single_add_to_cart_button::before {
+    font-family: 'Material Symbols Outlined';
+    content: "shopping_bag";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: -3px;
+    margin-right: 5px;
+}
+
+.single_add_to_cart_button.disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* ─── Produktmeta: Artikelnr / Kategori ─────────────────────── */
+.product_meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--outline);
+    font-size: 13px;
+    color: var(--on-surface-variant);
+}
+
+.product_meta>span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.product_meta>span::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .5;
+}
+
+.product_meta>span:first-child::before {
+    display: none;
+}
+
+.product_meta a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.product_meta a:hover {
+    text-decoration: underline;
+}
+
+/* ─── Produkttaggar (egen sektion, egen design) ─────────────── */
+.product-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.product-tags-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+}
+
+.product-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.product-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 13px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--border-accent-color);
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1.4;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.product-tag-pill:hover {
+    background: var(--border-accent-color);
+    color: #fff;
+}
+
+.woocommerce-variation-price {
+    margin-bottom: 8px;
+}
+
+.woocommerce-variation-availability {
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+/* ─── Filterpanel: kategorier, pris, attribut ───────────────── */
+.shop-filter-group {
+    padding-bottom: 28px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.shop-filter-group:last-child {
+    border-bottom: none;
+}
+
+.shop-filter-group .shop-filter-title,
+h2.shop-filter-title {
+    font-size: 16px !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--wc-dark) !important;
+    margin-bottom: 16px !important;
+    font-family: inherit !important;
+}
+
+/* Attribute filter groups are collapsible (folded by default)
+   everywhere, mobile and desktop alike, since a shop page with
+   several attribute groups otherwise turns into a long list before
+   the visitor reaches the product grid. See
+   render_shop_attribute_filter() in inc/woocommerce.php. Tighter
+   padding/margin than other filter groups (categories, price) since
+   most of the time these sit collapsed, showing just the heading. */
+.shop-filter-attribute {
+    padding-bottom: 4px;
+}
+
+.shop-filter-attribute>summary.shop-filter-title {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0 !important;
+}
+
+.shop-filter-attribute .dm-attribute-options--filter {
+    margin-top: 14px;
+}
+
+.shop-filter-attribute>summary::-webkit-details-marker {
+    display: none;
+}
+
+.shop-filter-attribute>summary::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    margin-left: 8px;
+    border-right: 2px solid var(--wc-dark);
+    border-bottom: 2px solid var(--wc-dark);
+    transform: rotate(45deg);
+    transition: transform .15s ease;
+}
+
+.shop-filter-attribute[open]>summary::after {
+    transform: rotate(-135deg);
+}
+
+.shop-category-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 0 !important;
+}
+
+.shop-category-list li {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.shop-category-list a {
+    display: inline-block;
+    padding: 8px 10px;
+    border-radius: var(--radius-default, 4px);
+    border-left: 3px solid transparent;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.shop-category-list a:hover {
+    background: #f3f4f6;
+    color: var(--wc-dark);
+    width: 100%;
+}
+
+.shop-category-list .current-cat>a {
+    background: #f7f7f7;
+    border-left-color: var(--border-accent-color);
+    color: var(--wc-dark);
+    width: 100%;
+}
+
+.shop-category-list .children {
+    list-style: none;
+    margin: 4px 0 4px 12px;
+    padding: 0;
+}
+
+.shop-filter-clear {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 16px;
+    color: #6b7280;
+}
+
+/* Summary of every currently active attribute filter, shown as small
+   removable tags + a Reset link. See the $active_filter_tags loop in
+   shop-sidebar.php. */
+.shop-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.shop-active-filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--attribute-box);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.shop-active-filter-tag:hover {
+    opacity: .85;
+}
+
+.shop-active-filter-tag span {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.shop-active-filters-reset {
+    font-size: 16px;
+    font-weight: 600;
+    color: #6b7280;
+    text-decoration: underline;
+}
+
+.shop-active-filters-reset:hover {
+    color: var(--wc-dark);
+}
+
+/* The price filter's own "Filter" submit button, relocated here (see
+   shop-sidebar.php) so it sits below every filter group instead of
+   between the price slider and the attribute filters. Same look as
+   its original .widget_price_filter .price_slider_amount .button
+   styling further down. */
+.shop-filter-apply .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--button-bg);
+    color: #fff;
+    padding: 16px 10px;
+    border: none;
+    border-radius: var(--radius-default, 4px);
+    font-weight: normal;
+    font-size: 16px;
+    text-align: center;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.shop-filter-apply .button::before {
+    font-family: 'Material Symbols Outlined';
+    content: "search";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: -4px;
+    margin-right: 5px;
+}
+
+/* WooCommerce prisfilter-widget */
+.widget_price_filter .price_slider {
+    margin-bottom: 16px;
+}
+
+.widget_price_filter .price_slider_amount {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    font-size: 16px;
+    color: #4b5563;
+}
+
+.widget_price_filter .price_slider_amount .price_label {
+    order: 1;
+}
+
+.widget_price_filter .ui-slider {
+    position: relative;
+    height: 4px;
+    border-radius: 999px;
+    margin: 16px 4px;
+}
+
+.widget_price_filter .ui-slider-range {
+    position: absolute;
+    height: 100%;
+    background: #6b7280;
+    border-radius: 999px;
+}
+
+.widget_price_filter .ui-slider-handle {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    transform: translateY(-50%);
+    background: #fff;
+    border: 2px solid #6b7280;
+    border-radius: 50%;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Attribute filter boxes (shop-sidebar.php) – reuses .dm-attribute-box
+   from the product page's attribute selector, just in a narrower
+   2-column grid to fit the sidebar. */
+.dm-attribute-options--filter {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* ─── General WooCommerce buttons (e.g. log in, register, submit
+   review) – specific buttons like the price filter's "Filter" and
+   #place_order are more specific and still win over this one. ──── */
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button,
+.woocommerce #respond input#submit,
+.woocommerce-tabs #respond input#submit,
+.woocommerce-Button {
+    background: var(--button-bg);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: var(--radius-default, 4px);
+    font-weight: normal;
+    text-decoration: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+}
+
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.woocommerce input.button:hover,
+.woocommerce #respond input#submit:hover {
+    opacity: .7;
+    color: #fff;
+}
+
+/* ─── Form elements on store pages: gray, modern design ───────── */
+.woocommerce form .form-row {
+    margin-bottom: 16px;
+}
+
+.woocommerce form .form-row input.input-text,
+.woocommerce form .form-row textarea,
+.woocommerce form .form-row select,
+.woocommerce-checkout select,
+.woocommerce-checkout input.input-text,
+.woocommerce-checkout textarea,
+.woocommerce-form-login input.input-text,
+.woocommerce-form-register input.input-text,
+.woocommerce-MyAccount-content input.input-text,
+.woocommerce-MyAccount-content select,
+.woocommerce-MyAccount-content textarea,
+.comment-form-author input,
+.comment-form-email input,
+.comment-form-url input,
+.comment-form-comment textarea {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 15px;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: #1f2937;
+}
+
+.comment-form-comment textarea {
+    min-height: 180px;
+    resize: vertical;
+}
+
+.woocommerce form .form-row input.input-text:hover,
+.woocommerce form .form-row textarea:hover,
+.woocommerce form .form-row select:hover,
+.woocommerce-form-login input.input-text:hover,
+.woocommerce-form-register input.input-text:hover,
+.comment-form-author input:hover,
+.comment-form-email input:hover,
+.comment-form-url input:hover,
+.comment-form-comment textarea:hover {
+    border-color: #9ca3af;
+}
+
+.woocommerce form .form-row input.input-text:focus,
+.woocommerce form .form-row textarea:focus,
+.woocommerce form .form-row select:focus,
+.woocommerce-form-login input.input-text:focus,
+.woocommerce-form-register input.input-text:focus,
+.comment-form-author input:focus,
+.comment-form-email input:focus,
+.comment-form-url input:focus,
+.comment-form-comment textarea:focus {
+    border-color: #6b7280;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, .15);
+    background-color: #fff;
+}
+
+.woocommerce form .show-password-input {
+    color: #6b7280;
+}
+
+.woocommerce-form-login__rememberme {
+    color: #4b5563;
+}
+
+.woocommerce form.checkout_coupon,
+.woocommerce form.login,
+.woocommerce form.register {
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+/* ─── My account: navigation as horizontal tabs ────────────────── */
+.woocommerce-account .woocommerce-MyAccount-navigation {
+    margin-bottom: 32px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li {
+    margin: 0;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li a .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li a:hover {
+    color: var(--wc-dark);
+    border-bottom-color: #d1d5db;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li.is-active a {
+    color: var(--wc-dark);
+    border-bottom-color: var(--wc-dark);
+}
+
+.u-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+}
+
+@media (min-width: 700px) {
+    .u-columns {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.woocommerce-form-login,
+.woocommerce-form-register {
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-lg, 8px);
+    padding: 32px;
+    background: #f9fafb;
+}
+
+.woocommerce-form-login h2,
+.woocommerce-form-register h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--wc-dark);
+    margin-bottom: 20px;
+}
+
+.woocommerce-form-row label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 6px;
+}
+
+/* ─── My account: Edit account – balanced form layout ───────────
+   WooCommerce already gives the first/last name fields the classes
+   .woocommerce-form-row--first / --last (meant to sit side by side),
+   but the theme was missing the CSS that actually made that happen –
+   everything stacked in a single narrow column "the old way". We put
+   the form in a 2-column grid: the name fields share one row, while
+   fields WooCommerce itself has marked as "--wide" (display name,
+   email) plus the password box span the full width – this gives a
+   clear, balanced rhythm instead of one long single column. */
+.woocommerce-EditAccountForm {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 640px;
+}
+
+@media (min-width: 600px) {
+    .woocommerce-EditAccountForm {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* WooCommerce adds an empty <div class="clear"> after every row/pair
+   to reset float in its own default CSS. In a grid layout this isn't
+   needed – without this, they create empty extra rows/columns. */
+.woocommerce-EditAccountForm .clear {
+    display: none;
+}
+
+.woocommerce-EditAccountForm .form-row {
+    margin-bottom: 0;
+}
+
+.woocommerce-EditAccountForm .woocommerce-form-row--wide,
+.woocommerce-EditAccountForm fieldset,
+.woocommerce-EditAccountForm>p:not(.form-row) {
+    grid-column: 1 / -1;
+}
+
+.woocommerce-EditAccountForm .woocommerce-password-hint {
+    grid-column: 1 / -1;
+    margin-top: -8px;
+}
+
+.woocommerce-EditAccountForm fieldset {
+    display: grid;
+    gap: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg, 8px);
+    padding: 28px 24px 24px;
+    margin: 4px 0 0;
+    background: #fff;
+}
+
+.woocommerce-EditAccountForm fieldset .form-row {
+    margin-bottom: 0;
+}
+
+.woocommerce-EditAccountForm legend {
+    padding: 0 10px 0 10px;
+    margin-left: -9px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--wc-dark);
+}
+
+.woocommerce-form-login .button,
+.woocommerce-form-register .button,
+.woocommerce-ResetPassword .button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.woocommerce-LostPassword {
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.woocommerce-MyAccount-content .woocommerce-Button,
+.woocommerce-MyAccount-content button.button {
+    background: var(--button-bg);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: var(--radius-default, 4px);
+    font-weight: 700;
+}
+
+.woocommerce-MyAccount-content table.woocommerce-orders-table,
+.woocommerce-MyAccount-content table.shop_table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+}
+
+.woocommerce-MyAccount-content table.woocommerce-orders-table th,
+.woocommerce-MyAccount-content table.woocommerce-orders-table td,
+.woocommerce-MyAccount-content table.shop_table th,
+.woocommerce-MyAccount-content table.shop_table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    font-size: 14px;
+}
+
+.woocommerce-MyAccount-content .woocommerce-MyAccount-orders-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.woocommerce-Addresses {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+@media (min-width: 700px) {
+    .woocommerce-Addresses {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.woocommerce-Address {
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-lg, 8px);
+    padding: 24px;
+}
+
+.woocommerce-Address-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.woocommerce-Address-title h3 {
+    font-size: 16px !important;
+    font-weight: 800;
+    color: var(--wc-dark) !important;
+}
+
+.woocommerce-Address-title .edit {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* ─── Varukorgs-/kontoikoner i headern ──────────────────────── */
+.header-icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full, 9999px);
+    color: var(--primary, #0d0d0d);
+    background: transparent;
+    text-decoration: none;
+}
+
+.header-icon-link:hover {
+    background: rgba(13, 13, 13, .08);
+    opacity: 1;
+}
+
+@keyframes woopaca-cart-pop {
+    0% {
+        transform: scale(.4);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.cart-icon-link .cart-count {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--cart-count-bg);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    animation: woopaca-cart-pop .4s ease;
+}
+
+/* ─── Search in the header ───────────────────────────────────── */
+.header-search {
+    position: relative;
+}
+
+.header-search-toggle {
+    border: none;
+    cursor: pointer;
+}
+
+.header-search-icon {
+    font-size: 24px;
+}
+
+.header-search-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(420px, calc(100vw - 32px));
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(16, 24, 40, .12);
+    padding: 12px;
+    z-index: 60;
+}
+
+.header-search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-search-input {
+    flex: 1;
+    padding: 10px 14px;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #1f2937;
+    font-size: 15px;
+}
+
+.header-search-input:hover {
+    border-color: #9ca3af;
+}
+
+.header-search-input:focus {
+    outline: none;
+    border-color: #6b7280;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(107, 114, 128, .15);
+}
+
+.header-search-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.header-search-close:hover {
+    background: #f3f4f6;
+    color: var(--wc-dark);
+}
+
+.header-search-results {
+    margin-top: 10px;
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.header-search-results.is-loading {
+    opacity: .5;
+}
+
+.header-search-empty {
+    padding: 16px 8px;
+    color: #6b7280;
+    font-size: 14px;
+    text-align: center;
+}
+
+.header-search-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.header-search-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.header-search-item:hover {
+    background: #f3f4f6;
+}
+
+.header-search-thumb {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.header-search-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.header-search-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.header-search-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--wc-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-search-price {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+@media (max-width: 480px) {
+    .header-search-panel {
+        position: fixed;
+        top: 72px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+    }
+}
+
+/* ─── Cart / checkout (basic readability) ────────────────────── */
+.woocommerce-cart-form table.shop_table,
+.woocommerce-checkout table.shop_table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 32px;
+}
+
+.woocommerce-cart-form table.shop_table th,
+.woocommerce-cart-form table.shop_table td,
+.woocommerce-checkout table.shop_table th,
+.woocommerce-checkout table.shop_table td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+#place_order,
+.checkout-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--button-bg);
+    color: #fff;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 18px 24px;
+    border-radius: var(--radius-default, 4px);
+    width: 100%;
+    text-align: center;
+    line-height: 1;
+}
+
+#place_order::before,
+.checkout-button::before {
+    font-family: 'Material Symbols Outlined';
+    content: "shopping_bag";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: -3px;
+}
+
+/* Empty cart button, added below the cart items (classic template)
+   or below the Cart block (see empty_cart_button_classic() /
+   assets/js/cart.js). Styled as a neutral/secondary action so it
+   doesn't compete with "Proceed to checkout". */
+.cart-empty-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin: -12px 0 32px;
+}
+
+.cart-empty-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid #9ca3af;
+    color: #6b7280;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: var(--radius-default, 4px);
+    cursor: pointer;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.cart-empty-button:hover {
+    background: #6b7280;
+    color: #fff;
+}
+
+.cart-empty-button .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* WooCommerce Cart block: the "Proceed to checkout" button is its
+   own block component (not .checkout-button/#place_order), so it has
+   to be styled separately to match the theme's other buttons. */
+.wc-block-cart__submit-button,
+.wc-block-cart__submit-button:visited {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--button-bg) !important;
+    color: #fff !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 18px 24px;
+    border-radius: var(--radius-default, 4px);
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    line-height: 1;
+    border: none;
+}
+
+.wc-block-cart__submit-button:hover {
+    background: var(--button-bg) !important;
+    opacity: .9;
+}
+
+.wc-block-cart__submit-button::before {
+    font-family: 'Material Symbols Outlined';
+    content: "shopping_bag";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: -3px;
+}
+
+/* WooCommerce Cart block: the coupon form's "Apply" button
+   (.wc-block-components-totals-coupon__button) otherwise renders as
+   WooCommerce Blocks' own plain/outlined default, not matching the
+   theme's buttons elsewhere (e.g. .wc-block-cart__submit-button just
+   above) – restyled to the same look. */
+.wc-block-components-totals-coupon__button,
+.wc-block-components-totals-coupon__button:visited {
+    background: var(--button-bg) !important;
+    color: #fff !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border-radius: var(--radius-default, 4px);
+    border: none !important;
+}
+
+.wc-block-components-totals-coupon__button:hover {
+    background: var(--button-bg) !important;
+    opacity: .9;
+}
+
+/* WooCommerce Checkout block: the "Place order" button is, just like
+   "Proceed to checkout", its own block component and is therefore
+   styled separately so it matches the theme's other buttons. */
+.wc-block-components-checkout-place-order-button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--button-bg) !important;
+    color: #fff !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 18px 24px !important;
+    border-radius: var(--radius-default, 4px);
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    line-height: 1;
+    border: none;
+    transition: transform .15s ease, opacity .15s ease;
+}
+
+.wc-block-components-checkout-place-order-button:hover {
+    background: var(--button-bg) !important;
+    opacity: .9;
+    transform: translateY(-1px);
+}
+
+.wc-block-components-checkout-place-order-button:active {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.wc-block-components-checkout-place-order-button::before {
+    font-family: 'Material Symbols Outlined';
+    content: "lock";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: -3px;
+}
+
+/* WooCommerce Cart/Checkout block: hide the product's short
+   description that would otherwise show under the product name in
+   the "Order summary" / cart. This is core functionality in
+   WooCommerce Blocks (not something the theme adds), and can't be
+   turned off in the settings – we hide it with CSS instead. */
+.wc-block-components-product-metadata__description {
+    display: none !important;
+}
+
+/* Cart's product list: larger product image, and hides the price
+   that WooCommerce shows duplicated directly under the product name
+   (already visible in the "Total" column). */
+.wc-block-cart-items__row {
+    grid-template-columns: 120px 1fr !important;
+}
+
+.wc-block-cart-item__image img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-default, 4px);
+}
+
+.wc-block-cart-item__prices,
+.wc-block-cart-item__product .wc-block-components-product-price {
+    display: none !important;
+}
+
+/* WooCommerce Cart block: hides the built-in "Cross-Sells" section
+   (default heading "You may be interested in…") that automatically
+   shows extra product recommendations under the cart items. This is
+   core Cart-block functionality (not something the theme adds), and
+   there's no per-store setting to turn it off globally, so it's
+   removed with CSS instead. */
+.wp-block-woocommerce-cart-cross-sells-block {
+    display: none !important;
+}
+
+.wc-block-components-button__text {
+    font-weight: normal;
+}
+
+.wc-block-cart-items__header-total,
+.wc-block-cart-items__header-image {
+    font-size: 22px;
+}
+
+.wc-block-components-product-name {
+    font-size: 22px !important;
+    text-decoration: none !important;
+}
+
+.wc-block-components-quantity-selector {
+    padding: 8px 10px;
+    width: auto;
+}
+
+.wc-block-components-product-details.wc-block-components-product-details {
+    font-size: 16px;
+}
+
+.wc-block-components-product-price {
+    font-size: 16px;
+    font-weight: normal;
+}
+
+.wp-block-woocommerce-cart-order-summary-heading-block.wc-block-cart__totals-title {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Order confirmation ("Tack för din beställning" / thank-you page).
+   This content is rendered by WooCommerce's Order Confirmation
+   blocks directly inside the Checkout page once an order exists
+   (class names: wc-block-order-confirmation-*) – it isn't a separate
+   template file we can override, so it's styled here instead. Each
+   section becomes its own card, centered and width-limited for
+   readability, since the checkout page itself has no max-width
+   wrapper of its own (unlike the shop/product pages).
+   ─────────────────────────────────────────────────────────────── */
+.wc-block-order-confirmation-status,
+.wc-block-order-confirmation-summary,
+.wc-block-order-confirmation-totals,
+.wc-block-order-confirmation-downloads,
+.wc-block-order-confirmation-billing-address,
+.wc-block-order-confirmation-shipping-address,
+.wc-block-order-confirmation-additional-fields-wrapper {
+    max-width: 700px;
+    margin: 0 auto 24px;
+    padding: 32px;
+    background: var(--surface-container-lowest, #fff);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-default, 4px);
+}
+
+.wc-block-order-confirmation-status {
+    text-align: center;
+    padding-top: 48px;
+}
+
+.wc-block-order-confirmation-status::before {
+    content: "check_circle";
+    font-family: 'Material Symbols Outlined';
+    display: block;
+    font-size: 48px;
+    color: #15803d;
+    margin-bottom: 12px;
+}
+
+.wc-block-order-confirmation-status h1 {
+    margin-bottom: 8px;
+}
+
+.wc-block-order-confirmation-status p {
+    color: var(--on-surface-variant);
+    font-size: 16px;
+}
+
+.wc-block-order-confirmation-summary h2,
+.wc-block-order-confirmation-totals h2,
+.wc-block-order-confirmation-downloads h2,
+.wc-block-order-confirmation-billing-address h2,
+.wc-block-order-confirmation-shipping-address h2 {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--outline);
+}
+
+.wc-block-order-confirmation-summary ul,
+.wc-block-order-confirmation-totals ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.wc-block-order-confirmation-summary li,
+.wc-block-order-confirmation-totals li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--outline);
+    font-size: 15px;
+}
+
+.wc-block-order-confirmation-summary li:last-child,
+.wc-block-order-confirmation-totals li:last-child {
+    border-bottom: none;
+}
+
+/* The two address cards sit in a Columns block side by side on
+   desktop – let them share the row instead of each claiming the
+   full centered width on its own. */
+.wc-block-order-confirmation-billing-address,
+.wc-block-order-confirmation-shipping-address {
+    max-width: none;
+    margin: 0;
+}
+
+.wc-block-order-confirmation-billing-address address,
+.wc-block-order-confirmation-shipping-address address {
+    font-style: normal;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+}
