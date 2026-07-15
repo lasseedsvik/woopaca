@@ -2,7 +2,7 @@
 Theme URI: https://woopaca.lasseedsvik.se
 Author: Lasse Edsvik
 Description: WooCommerce Theme WooPaca
-Version: 1.0
+Version: 1.0.1
 Text Domain: woopaca
 */
  
@@ -14,7 +14,7 @@ Text Domain: woopaca
     --surface: #f4f4f2;
     --surface-container-low: #ececea;
     --surface-container-lowest: #ffffff;
-    --background: #1a1a1a;
+    --background: #fff;
     --site-wrap-background: #34363d;
     --on-background: #1f1f1f;
     --on-surface-variant: #71716b;
