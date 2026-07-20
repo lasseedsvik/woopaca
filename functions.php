@@ -564,7 +564,7 @@ function woopaca_customize_register(WP_Customize_Manager $wp_customize)
     ));
     $wp_customize->add_control('front_shop_eyebrow', array(
         'label' => 'Small label above the heading',
-        'description' => 'Currently "Nyheter".',
+        'description' => 'Currently "New products".',
         'section' => 'front_shop_settings',
         'type' => 'text',
     ));
@@ -575,7 +575,7 @@ function woopaca_customize_register(WP_Customize_Manager $wp_customize)
     ));
     $wp_customize->add_control('front_shop_heading', array(
         'label' => 'Heading',
-        'description' => 'Currently "Från butiken".',
+        'description' => 'Currently "Currently at the store".',
         'section' => 'front_shop_settings',
         'type' => 'text',
     ));
@@ -586,7 +586,7 @@ function woopaca_customize_register(WP_Customize_Manager $wp_customize)
     ));
     $wp_customize->add_control('front_shop_link_text', array(
         'label' => '"View shop" link text',
-        'description' => 'Currently "Visa hela butiken".',
+        'description' => 'Currently "Show all products".',
         'section' => 'front_shop_settings',
         'type' => 'text',
     ));
