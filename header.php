@@ -88,6 +88,25 @@
         }
     }
 
+    // Product pages: use the product's own first/main image for the shared image,
+    // overriding whatever $fb_image was set to above (favicon or fb-logo.png fallback).
+    if (function_exists('is_product') && is_product()) {
+        global $post;
+        $woopaca_product = wc_get_product($post->ID);
+
+        if ($woopaca_product) {
+            $product_image_id = $woopaca_product->get_image_id(); // ID of the product's first/main image
+
+            if ($product_image_id) {
+                $product_image_src = wp_get_attachment_image_src($product_image_id, 'full');
+
+                if ($product_image_src) {
+                    $fb_image = $product_image_src[0];
+                }
+            }
+        }
+    }
+
     // Facebook App ID. Replace the value below with your real App ID from
     // https://developers.facebook.com/apps/ (required by Facebook's sharing debugger).
     $fb_app_id = ''; // Enter your real Facebook App ID here once you've created one
