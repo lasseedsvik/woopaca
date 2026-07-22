@@ -15,7 +15,43 @@
     <?php
     // 1. Set the image that SHOULD be shared on the homepage and all static pages (e.g. /om-oss)
     // Make sure this image has a good format (ideally 1200x630 pixels)
+    // Prefer the site's favicon (Site Icon, set under Customizer > Site Identity) at the
+    // highest resolution WordPress has stored for it. Fall back to fb-logo.png if no
+    // favicon has been set.
     $fb_image = get_template_directory_uri() . '/assets/images/fb-logo.png';
+
+    $site_icon_id = get_option('site_icon');
+    if ($site_icon_id) {
+        $best_url = false;
+        $best_width = 0;
+
+        // The original uploaded site icon (usually the largest version available).
+        $full_src = wp_get_attachment_image_src($site_icon_id, 'full');
+        if ($full_src) {
+            $best_url = $full_src[0];
+            $best_width = (int) $full_src[1];
+        }
+
+        // WordPress also generates several smaller cropped sizes (32, 180, 192, 270...)
+        // for the site icon. Check those too, in case one of them is somehow larger
+        // than what "full" reports.
+        $metadata = wp_get_attachment_metadata($site_icon_id);
+        if (!empty($metadata['sizes']) && !empty($metadata['file'])) {
+            $upload_dir = wp_get_upload_dir();
+            $base_url = trailingslashit($upload_dir['baseurl']) . trailingslashit(dirname($metadata['file']));
+
+            foreach ($metadata['sizes'] as $size) {
+                if (!empty($size['width']) && !empty($size['file']) && (int) $size['width'] > $best_width) {
+                    $best_width = (int) $size['width'];
+                    $best_url = $base_url . $size['file'];
+                }
+            }
+        }
+
+        if ($best_url) {
+            $fb_image = $best_url;
+        }
+    }
 
     // 3. Set a default description (shown on the homepage/pages without their own excerpt)
     $fb_description = get_bloginfo('description');
