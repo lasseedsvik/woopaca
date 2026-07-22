@@ -15,9 +15,9 @@
     <?php
     // 1. Set the image that SHOULD be shared on the homepage and all static pages (e.g. /om-oss)
     // Make sure this image has a good format (ideally 1200x630 pixels)
-    // Prefer the site's favicon (Site Icon, set under Customizer > Site Identity) at the
-    // highest resolution WordPress has stored for it. Fall back to fb-logo.png if no
-    // favicon has been set.
+    // Priority: logo selected under Customizer > Site Settings > Logos > Header logo,
+    // then the site's favicon (Site Icon) at its highest available resolution,
+    // then fb-logo.png as the final fallback.
     $fb_image = get_template_directory_uri() . '/assets/images/fb-logo.png';
 
     $site_icon_id = get_option('site_icon');
@@ -51,6 +51,11 @@
         if ($best_url) {
             $fb_image = $best_url;
         }
+    }
+
+    $site_header_logo = get_theme_mod('header_logo');
+    if ($site_header_logo) {
+        $fb_image = $site_header_logo;
     }
 
     // 3. Set a default description (shown on the homepage/pages without their own excerpt)
