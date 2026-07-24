@@ -31,7 +31,7 @@ do_action('woocommerce_before_add_to_cart_form'); ?>
 
     <?php if (empty($available_variations) && false !== $available_variations) : ?>
         <p class="stock out-of-stock">
-            <?php echo esc_html(apply_filters('woocommerce_out_of_stock_message', __('Denna produkt är tyvärr slut i lager.', 'woopaca'))); ?>
+            <?php echo esc_html(apply_filters('woocommerce_out_of_stock_message', __('This product is out of stock.', 'woopaca'))); ?>
         </p>
     <?php else : ?>
 
