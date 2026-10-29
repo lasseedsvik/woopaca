@@ -31,13 +31,13 @@ if (!$error_404_page || 'page' !== $error_404_page->post_type || 'publish' !== $
 				</header>
 
 				<div class="page-content">
-					<p>The page you're looking for couldn't be found.</p>
+					<p><?php esc_html_e('The page you\'re looking for couldn\'t be found.', 'woopaca'); ?></p>
 				</div>
 
 				<div class="error-404-actions">
-					<a href="<?php echo esc_url(home_url('/')); ?>" class="btn-primary">Back to homepage</a>
+					<a href="<?php echo esc_url(home_url('/')); ?>" class="btn-primary"><?php esc_html_e('Back to homepage', 'woopaca'); ?></a>
 					<?php if (class_exists('WooCommerce')) : ?>
-						<a href="<?php echo esc_url(get_post_type_archive_link('product')); ?>" class="btn-outline">Go to shop</a>
+						<a href="<?php echo esc_url(get_post_type_archive_link('product')); ?>" class="btn-outline"><?php esc_html_e('Go to shop', 'woopaca'); ?></a>
 					<?php endif; ?>
 				</div>
 			</div>

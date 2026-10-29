@@ -34,7 +34,7 @@ $base_url = is_shop() ? get_post_type_archive_link('product') : get_term_link(ge
 $active_filter_tags = array();
 ?>
 <div class="shop-filter-group shop-filter-categories">
-    <h2 class="shop-filter-title"><?php echo esc_html(get_theme_mod('shop_category_filter_label', 'Categories')); ?></h2>
+    <h2 class="shop-filter-title"><?php echo esc_html(woopaca_mod('shop_category_filter_label', __('Categories', 'woopaca'))); ?></h2>
     <ul class="shop-category-list">
         <?php
         $current_term = is_tax('product_cat') ? get_queried_object() : null;
@@ -61,7 +61,7 @@ $active_filter_tags = array();
 // category/tag archive, and also when every visible product's price
 // rounds to the exact same value – there'd be nothing to filter. That
 // makes the widget's own output unpredictable depending on context,
-// so we capture it first and only show the "Filtrera efter pris"
+// so we capture it first and only show the "Filter by price"
 // heading if a slider was actually produced, instead of leaving a
 // heading with nothing underneath it.
 ob_start();
@@ -95,13 +95,17 @@ if (trim($price_filter_html) !== '') {
 if (trim($price_filter_html) !== '') :
 ?>
     <div class="shop-filter-group shop-filter-price">
-        <h2 class="shop-filter-title"><?php echo esc_html(get_theme_mod('shop_price_filter_label', 'Filter by price')); ?></h2>
+        <h2 class="shop-filter-title"><?php echo esc_html(woopaca_mod('shop_price_filter_label', __('Filter by price', 'woopaca'))); ?></h2>
         <?php echo $price_filter_html; ?>
     </div>
 <?php endif; ?>
 
 <?php
 $attribute_taxonomies = wc_get_attribute_taxonomies();
+
+// null on the main shop page; on a category/tag archive, the products
+// in it – see woopaca_get_archive_context_product_ids().
+$context_product_ids = woopaca_get_archive_context_product_ids();
 
 if (!empty($attribute_taxonomies)) :
     foreach ($attribute_taxonomies as $tax) :
@@ -125,7 +129,25 @@ if (!empty($attribute_taxonomies)) :
         // still uses WooCommerce's native, indexed filtering.
         $filter_key = 'filter_' . $tax->attribute_name;
         $query_type_key = 'query_type_' . $tax->attribute_name;
-        $current_slugs = isset($_GET[$filter_key]) ? explode(',', wc_clean(wp_unslash($_GET[$filter_key]))) : array();
+        $current_slugs = isset($_GET[$filter_key]) && is_string($_GET[$filter_key]) ? explode(',', wc_clean(wp_unslash($_GET[$filter_key]))) : array();
+
+        // On a category/tag page, only offer terms that at least one
+        // product in it actually has (plus anything already chosen, so
+        // an active filter can always be switched off again).
+        if (null !== $context_product_ids) {
+            $terms_in_context = $context_product_ids
+                ? wp_get_object_terms($context_product_ids, $taxonomy, array('fields' => 'ids'))
+                : array();
+            $terms_in_context = is_wp_error($terms_in_context) ? array() : array_map('intval', $terms_in_context);
+
+            $terms = array_values(array_filter($terms, function ($term) use ($terms_in_context, $current_slugs) {
+                return in_array((int) $term->term_id, $terms_in_context, true) || in_array($term->slug, $current_slugs, true);
+            }));
+
+            if (empty($terms)) {
+                continue;
+            }
+        }
 
         $items = array();
         foreach ($terms as $term) {
@@ -139,7 +161,13 @@ if (!empty($attribute_taxonomies)) :
 
             if (!empty($new_slugs)) {
                 $query_args[$filter_key] = implode(',', $new_slugs);
-                $query_args[$query_type_key] = 'and';
+                // "or": Red + Blue means "red OR blue products", which is
+                // what a shopper expects when ticking two values of the
+                // same attribute. ("and" required a product to have
+                // both, so ticking a second value narrowed the results.)
+                // Different attributes are still combined with AND by
+                // WooCommerce (Red/Blue AND size M).
+                $query_args[$query_type_key] = 'or';
             } else {
                 unset($query_args[$filter_key], $query_args[$query_type_key]);
             }
@@ -176,14 +204,28 @@ if (!empty($local_attributes)) :
             continue;
         }
 
-        $selected_values = isset($_GET['local_attr'][$attr_key]) ? array_map('sanitize_text_field', (array) wp_unslash($_GET['local_attr'][$attr_key])) : array();
+        $selected_values = isset($_GET['local_attr']) && is_array($_GET['local_attr']) && isset($_GET['local_attr'][$attr_key]) ? array_map('sanitize_text_field', array_filter((array) wp_unslash($_GET['local_attr'][$attr_key]), 'is_string')) : array();
 
         $items = array();
         foreach ($attribute['values'] as $value) {
+            // Same as for global attributes above: on a category/tag
+            // page, skip values no product in it has (unless chosen).
+            if (null !== $context_product_ids
+                && !in_array($value, $selected_values, true)
+                && !array_intersect($attribute['products'][$value] ?? array(), $context_product_ids)
+            ) {
+                continue;
+            }
+
             $is_chosen = in_array($value, $selected_values, true);
 
             $query_args = wp_unslash($_GET);
             unset($query_args['paged']);
+            // A crafted URL like ?local_attr=x would otherwise turn the
+            // assignment below into a fatal "string offset" error.
+            if (isset($query_args['local_attr']) && !is_array($query_args['local_attr'])) {
+                unset($query_args['local_attr']);
+            }
             $current_values = isset($query_args['local_attr'][$attr_key]) ? (array) $query_args['local_attr'][$attr_key] : array();
 
             if ($is_chosen) {

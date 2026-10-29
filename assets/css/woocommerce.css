@@ -1439,6 +1439,13 @@ a.dm-attribute-box {
     margin-bottom: 8px;
 }
 
+/* The chosen variation's price is shown in .product-info-price next to
+   the quantity field instead (swapped in by assets/js/variations.js),
+   so WooCommerce's own copy above the button would just repeat it. */
+.variations_form .woocommerce-variation-price {
+    display: none;
+}
+
 .woocommerce-variation-availability {
     margin-bottom: 16px;
     font-size: 14px;

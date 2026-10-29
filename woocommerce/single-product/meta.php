@@ -30,11 +30,12 @@ $has_tags = $tags && !is_wp_error($tags) ? true : false;
 
     <?php if ($has_categories) : ?>
 
-        <span class="posted_in">
-            <?php
-            echo wp_kses_post(wc_get_product_category_list($product->get_id(), ', ', '<span class="posted_in">' . _n('Category:', 'Categories:', count($product->get_category_ids()), 'woocommerce') . ' ', '</span>'));
-            ?>
-        </span>
+        <?php
+        // wc_get_product_category_list() already wraps the list in its
+        // own <span class="posted_in"> via the $before/$after arguments,
+        // so no extra wrapper here (it used to be nested twice).
+        echo wp_kses_post(wc_get_product_category_list($product->get_id(), ', ', '<span class="posted_in">' . _n('Category:', 'Categories:', count($product->get_category_ids()), 'woocommerce') . ' ', '</span>'));
+        ?>
 
     <?php endif; ?>
 

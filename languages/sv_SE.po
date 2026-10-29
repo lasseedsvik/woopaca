@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WooPaca - WooCommerce Theme 2.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: woopaca\n"
+"Language: sv_SE\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: 404.php:34
+msgid "The page you're looking for couldn't be found."
+msgstr "Sidan du letar efter kunde inte hittas."
+
+#: 404.php:38
+msgid "Back to homepage"
+msgstr "Tillbaka till startsidan"
+
+#: 404.php:40
+msgid "Go to shop"
+msgstr "Till butiken"
+
+#: front-page.php:45
+msgid "News"
+msgstr "Nyheter"
+
+#: front-page.php:46
+msgid "From the store"
+msgstr "Från butiken"
+
+#: front-page.php:63 woocommerce/shop-sidebar.php:53
+msgid "Show all products"
+msgstr "Visa alla produkter"
+
+#: front-page.php:86
+msgid "Latest from the blog!"
+msgstr "Senaste från bloggen!"
+
+#: front-page.php:123
+msgid "See all posts here!"
+msgstr "Se alla inlägg här!"
+
+#: functions.php:33
+msgid "Mainmenu"
+msgstr "Huvudmeny"
+
+#: functions.php:126 header.php:179
+msgid "Open menu"
+msgstr "Öppna meny"
+
+#: functions.php:127
+msgid "Close menu"
+msgstr "Stäng meny"
+
+#: functions.php:128
+msgid "Show submenu"
+msgstr "Visa undermeny"
+
+#: functions.php:129
+msgid "Hide submenu"
+msgstr "Dölj undermeny"
+
+#: functions.php:179 functions.php:264
+msgid "We are using cookies to improve your experience!"
+msgstr "Vi använder cookies för att förbättra din upplevelse!"
+
+#: functions.php:180 functions.php:274
+msgid "Read more"
+msgstr "Läs mer"
+
+#: functions.php:182 functions.php:295
+msgid "Accept"
+msgstr "Acceptera"
+
+#: functions.php:183 functions.php:305
+msgid "Decline"
+msgstr "Neka"
+
+#: header.php:174
+msgid "Skip to content"
+msgstr "Hoppa till innehållet"
+
+#: header.php:211
+msgid "Search"
+msgstr "Sök"
+
+#: header.php:220
+msgid "Search products…"
+msgstr "Sök produkter…"
+
+#: header.php:220
+msgid "Search products"
+msgstr "Sök produkter"
+
+#: header.php:222
+msgid "Close search"
+msgstr "Stäng sökningen"
+
+#: header.php:232
+msgid "My account"
+msgstr "Mitt konto"
+
+#: header.php:236
+msgid "Cart"
+msgstr "Varukorg"
+
+#: header.php:248
+msgid "Visit the shop"
+msgstr "Besök butiken"
+
+#: home.php:19
+msgid "Choose page"
+msgstr "Välj sida"
+
+#: home.php:22
+msgid "Go to page…"
+msgstr "Gå till sida…"
+
+#: home.php:32
+#, php-format
+msgid "Page %d"
+msgstr "Sida %d"
+
+#: home.php:53
+msgid "Welcome to the blog!"
+msgstr "Välkommen till bloggen!"
+
+#: home.php:63
+msgid "Here you'll find our latest blog posts!"
+msgstr "Här hittar du våra senaste blogginlägg!"
+
+#: home.php:115
+msgid "Previous"
+msgstr "Föregående"
+
+#: home.php:116
+msgid "Next"
+msgstr "Nästa"
+
+#: inc/woocommerce.php:488
+msgid "No products found."
+msgstr "Inga produkter hittades."
+
+#: inc/woocommerce.php:585 inc/woocommerce.php:619
+msgid "Are you sure you want to empty the cart?"
+msgstr "Är du säker på att du vill tömma varukorgen?"
+
+#: inc/woocommerce.php:592 inc/woocommerce.php:620
+msgid "Empty cart!"
+msgstr "Töm varukorgen!"
+
+#: inc/woocommerce.php:688
+msgid "Go to page"
+msgstr "Gå till sida"
+
+#: inc/woocommerce.php:695
+#, php-format
+msgid "Page %1$d of %2$d"
+msgstr "Sida %1$d av %2$d"
+
+#: inc/woocommerce.php:715
+msgid "Shop"
+msgstr "Butik"
+
+#: single.php:31
+msgid "Pages:"
+msgstr "Sidor:"
+
+#: single.php:42
+msgid "Published:"
+msgstr "Publicerad:"
+
+#: single.php:67
+msgid "Back!"
+msgstr "Tillbaka!"
+
+#: single.php:111
+msgid "Latest posts!"
+msgstr "Senaste inläggen!"
+
+#: single.php:189
+msgid "No other posts found."
+msgstr "Inga andra inlägg hittades."
+
+#: single.php:204
+msgid "See all posts!"
+msgstr "Se alla inlägg!"
+
+#: woocommerce/archive-product.php:25
+msgid "Filter products"
+msgstr "Filtrera produkter"
+
+#: woocommerce/shop-sidebar.php:37
+msgid "Categories"
+msgstr "Kategorier"
+
+#: woocommerce/shop-sidebar.php:98
+msgid "Filter by price"
+msgstr "Filtrera efter pris"
+
+#: woocommerce/shop-sidebar.php:277
+msgid "Reset all"
+msgstr "Återställ alla"
+
+#: woocommerce/single-product/add-to-cart/variable.php:34
+msgid "This product is out of stock."
+msgstr "Den här produkten är slut i lager."
+
+#: woocommerce/single-product/add-to-cart/variable.php:96
+msgid "Reset"
+msgstr "Återställ"

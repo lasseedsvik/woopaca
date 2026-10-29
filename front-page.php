@@ -14,7 +14,9 @@
         <?php if (class_exists('WooCommerce')):
             $front_shop_query_args = array(
                 'post_type' => 'product',
-                'posts_per_page' => (int) get_theme_mod('front_shop_product_count', 6),
+                // At least 1: 0 would make WP_Query fall back to the
+                // "Blog pages show at most" setting instead.
+                'posts_per_page' => max(1, (int) get_theme_mod('front_shop_product_count', 6)),
                 'post_status' => 'publish',
             );
 
@@ -40,8 +42,8 @@
                         <div class="front-shop-heading">
                             <div>
                                 <span
-                                    class="section-eyebrow"><?php echo esc_html(get_theme_mod('front_shop_eyebrow', 'News')); ?></span>
-                                <h1><?php echo esc_html(get_theme_mod('front_shop_heading', 'From the store')); ?></h1>
+                                    class="section-eyebrow"><?php echo esc_html(woopaca_mod('front_shop_eyebrow', __('News', 'woopaca'))); ?></span>
+                                <h1><?php echo esc_html(woopaca_mod('front_shop_heading', __('From the store', 'woopaca'))); ?></h1>
                             </div>
 
                         </div>
@@ -58,7 +60,7 @@
                         </ul>
                         <h2 class="front-shop-link-header">
                             <a class="front-shop-link" href="<?php echo esc_url(get_post_type_archive_link('product')); ?>">
-                                <?php echo esc_html(get_theme_mod('front_shop_link_text', 'Show all products')); ?>
+                                <?php echo esc_html(woopaca_mod('front_shop_link_text', __('Show all products', 'woopaca'))); ?>
                             </a>
                         </h2>
                     </div>
@@ -81,7 +83,7 @@
 
             <h1 style="margin-bottom: 20px"><img alt="" class="logo-main icon"
                     src="<?php echo get_template_directory_uri(); ?>/assets/images/blog.svg">
-                <?php echo esc_html(get_theme_mod('front_blog_section_heading', 'Latest from the blog!')); ?>
+                <?php echo esc_html(woopaca_mod('front_blog_section_heading', __('Latest from the blog!', 'woopaca'))); ?>
             </h1>
 
             <?php
@@ -118,7 +120,7 @@
             ?>
             <h3><a href="<?php echo esc_url($blog_page_url); ?>"><img alt="" class="logo-main icon"
                         src="<?php echo get_template_directory_uri(); ?>/assets/images/blog.svg">
-                    <?php echo esc_html(get_theme_mod('front_blog_section_link_text', 'See all posts here!')); ?></a>
+                    <?php echo esc_html(woopaca_mod('front_blog_section_link_text', __('See all posts here!', 'woopaca'))); ?></a>
             </h3>
         </div>
     </main>

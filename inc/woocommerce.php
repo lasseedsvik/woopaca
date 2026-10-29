@@ -49,13 +49,19 @@ function woopaca_woocommerce_scripts()
     // Keeps the header cart count in sync with cart changes made via
     // WooCommerce Blocks (see the file itself for why this is needed
     // in addition to the classic add-to-cart fragments below).
-    wp_enqueue_script(
-        'woopaca-cart-count-sync',
-        get_template_directory_uri() . '/assets/js/cart-count-sync.js',
-        array('wp-data'),
-        woopaca_asset_version('/assets/js/cart-count-sync.js'),
-        true
-    );
+    // Only on the cart/checkout pages: the wc/store/cart data store
+    // it watches only exists where those blocks are rendered, and the
+    // wp-data dependency pulls in React and several WP packages that
+    // every other page would otherwise download for nothing.
+    if (is_cart() || is_checkout()) {
+        wp_enqueue_script(
+            'woopaca-cart-count-sync',
+            get_template_directory_uri() . '/assets/js/cart-count-sync.js',
+            array('wp-data'),
+            woopaca_asset_version('/assets/js/cart-count-sync.js'),
+            true
+        );
+    }
 
     if (is_product()) {
         wp_enqueue_script(
@@ -202,9 +208,91 @@ function woopaca_product_info_price_after_quantity()
         return;
     }
 
+    $GLOBALS['woopaca_price_printed'] = true;
+
     echo '<div class="product-info-price">' . wp_kses_post($product->get_price_html()) . '</div>';
 }
 add_action('woocommerce_after_add_to_cart_quantity', 'woopaca_product_info_price_after_quantity');
+
+/**
+ * Fallback for every case where the quantity hook above never fires,
+ * so the product would otherwise show no price at all (the default
+ * woocommerce_template_single_price is removed further up): simple
+ * products that are out of stock (simple.php skips the whole form),
+ * variable products with no available variations, external/affiliate
+ * products, grouped products. Called from woopaca_product_info.php
+ * right after the add-to-cart template.
+ */
+function woopaca_product_info_price_fallback()
+{
+    global $product;
+
+    if (!$product || !empty($GLOBALS['woopaca_price_printed'])) {
+        return;
+    }
+
+    $price_html = $product->get_price_html();
+
+    if ('' !== $price_html) {
+        echo '<div class="product-info-price">' . wp_kses_post($price_html) . '</div>';
+    }
+}
+
+/**
+ * IDs of the published, catalog-visible products that belong to the
+ * category/tag archive currently being viewed (child categories
+ * included, like the archive itself). Used by shop-sidebar.php to only
+ * offer attribute filter values that actually exist in this category,
+ * instead of every value in the whole shop (which led to filters that
+ * returned zero products).
+ *
+ * Returns null on the main shop page, where every value is relevant.
+ */
+function woopaca_get_archive_context_product_ids()
+{
+    static $ids = false;
+
+    if (false !== $ids) {
+        return $ids;
+    }
+
+    $term = is_product_taxonomy() ? get_queried_object() : null;
+
+    if (!$term || empty($term->taxonomy)) {
+        $ids = null;
+        return $ids;
+    }
+
+    $visibility_terms = wc_get_product_visibility_term_ids();
+
+    $query = new WP_Query(array(
+        'post_type'              => 'product',
+        'post_status'            => 'publish',
+        'posts_per_page'         => -1,
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+        'tax_query'              => array(
+            array(
+                'taxonomy'         => $term->taxonomy,
+                'field'            => 'term_id',
+                'terms'            => $term->term_id,
+                'include_children' => true,
+            ),
+            array(
+                'taxonomy' => 'product_visibility',
+                'field'    => 'term_taxonomy_id',
+                'terms'    => array_filter(array($visibility_terms['exclude-from-catalog'])),
+                'operator' => 'NOT IN',
+            ),
+        ),
+    ));
+
+    $ids = array_map('intval', $query->posts);
+
+    return $ids;
+}
 
 /**
  * 6. Helper function: readable name for an attribute value. Global/
@@ -367,8 +455,13 @@ function woopaca_ensure_woocommerce_pages()
         update_option('woocommerce_enable_checkout_login_reminder', 'yes');
     }
 }
+// Only when the theme is activated. This used to also run on every
+// admin_init – i.e. every wp-admin page load AND every admin-ajax.php
+// request (including each keystroke in the header search) – which
+// both cost queries on every request and made it impossible for the
+// store owner to turn account registration off: the three options
+// above were silently switched back to "yes" on the next admin load.
 add_action('after_switch_theme', 'woopaca_ensure_woocommerce_pages');
-add_action('admin_init', 'woopaca_ensure_woocommerce_pages');
 
 /**
  * 10. Search in the header: clicking the search icon shows a text
@@ -391,8 +484,8 @@ function woopaca_enqueue_search_assets()
     );
 
     wp_localize_script('woopaca-search', 'woopacaSearch', array(
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('site_search_nonce'),
+        'ajaxUrl'   => admin_url('admin-ajax.php'),
+        'noResults' => __('No products found.', 'woopaca'),
     ));
 }
 add_action('wp_enqueue_scripts', 'woopaca_enqueue_search_assets', 20);
@@ -406,12 +499,22 @@ add_action('wp_enqueue_scripts', 'woopaca_enqueue_search_assets', 20);
  */
 function woopaca_ajax_product_search()
 {
-    check_ajax_referer('site_search_nonce', 'nonce');
-
-    $search_term = isset($_GET['term']) ? sanitize_text_field(wp_unslash($_GET['term'])) : '';
+    // No nonce check: this is a read-only search over public data
+    // (the same thing /?s=...&post_type=product returns), and a nonce
+    // baked into a page that a cache plugin/CDN serves for longer than
+    // the nonce's 12–24h lifetime makes every search fail with "-1".
+    $search_term = isset($_GET['term']) && is_string($_GET['term']) ? sanitize_text_field(wp_unslash($_GET['term'])) : '';
 
     if (mb_strlen($search_term) < 2) {
         wp_send_json_success(array());
+    }
+
+    // Respect catalog visibility ("Hidden" / "Shop only") and the
+    // "Hide out of stock items" setting, like the regular search does.
+    $visibility_terms = wc_get_product_visibility_term_ids();
+    $excluded_terms   = array($visibility_terms['exclude-from-search']);
+    if ('yes' === get_option('woocommerce_hide_out_of_stock_items')) {
+        $excluded_terms[] = $visibility_terms['outofstock'];
     }
 
     $query = new WP_Query(array(
@@ -420,6 +523,14 @@ function woopaca_ajax_product_search()
         'post_status'         => 'publish',
         'posts_per_page'      => 6,
         'ignore_sticky_posts' => true,
+        'tax_query'           => array(
+            array(
+                'taxonomy' => 'product_visibility',
+                'field'    => 'term_taxonomy_id',
+                'terms'    => array_filter($excluded_terms),
+                'operator' => 'NOT IN',
+            ),
+        ),
     ));
 
     $results = array();
@@ -468,14 +579,17 @@ function woopaca_empty_cart_button_classic()
         return;
     }
 
-    $confirm_text = get_theme_mod('cart_empty_confirm_text', 'Are you sure you want to empty the cart?');
+    // "?:" rather than get_theme_mod()'s own default: once the field
+    // has been saved empty, get_theme_mod() returns '' (not the
+    // default), which left an empty button / empty confirm dialog.
+    $confirm_text = woopaca_mod('cart_empty_confirm_text', __('Are you sure you want to empty the cart?', 'woopaca'));
     ?>
     <div class="cart-empty-actions">
         <?php wp_nonce_field('site_empty_cart', 'site_empty_cart_nonce'); ?>
         <button type="submit" name="site_empty_cart" value="1" class="cart-empty-button"
             onclick="return confirm('<?php echo esc_js($confirm_text); ?>');">
             <span class="material-symbols-outlined" aria-hidden="true">remove_shopping_cart</span>
-            <?php echo esc_html(get_theme_mod('cart_empty_button_label', 'Empty cart!')); ?>
+            <?php echo esc_html(woopaca_mod('cart_empty_button_label', __('Empty cart!', 'woopaca'))); ?>
         </button>
     </div>
     <?php
@@ -502,8 +616,8 @@ function woopaca_empty_cart_button_block_fallback()
 
     wp_localize_script('woopaca-cart', 'woopacaCart', array(
         'emptyCartUrl' => esc_url_raw(wp_nonce_url(add_query_arg('empty_cart', '1', wc_get_cart_url()), 'site_empty_cart', 'site_empty_cart_nonce')),
-        'confirmText' => get_theme_mod('cart_empty_confirm_text', 'Are you sure you want to empty the cart?'),
-        'buttonLabel' => get_theme_mod('cart_empty_button_label', 'Empty cart!'),
+        'confirmText' => woopaca_mod('cart_empty_confirm_text', __('Are you sure you want to empty the cart?', 'woopaca')),
+        'buttonLabel' => woopaca_mod('cart_empty_button_label', __('Empty cart!', 'woopaca')),
         'storeApiCartUrl' => esc_url_raw(rest_url('wc/store/v1/cart')),
     ));
 }
@@ -571,7 +685,7 @@ function woopaca_shop_page_select()
     $current_page = max(1, (int) get_query_var('paged'));
     ?>
     <div class="page-dropdown-container">
-        <label class="screen-reader-text" for="shop-page-select">Go to page</label>
+        <label class="screen-reader-text" for="shop-page-select"><?php esc_html_e('Go to page', 'woopaca'); ?></label>
         <select id="shop-page-select" class="page-select"
             onchange="if (this.value) { window.location.href = this.value; }">
             <?php for ($i = 1; $i <= $total_pages; $i++) : ?>
@@ -598,7 +712,7 @@ function woopaca_shop_page_select()
  */
 function woopaca_breadcrumb_home_is_shop($args)
 {
-    $args['home'] = 'Shop';
+    $args['home'] = __('Shop', 'woopaca');
 
     return $args;
 }
@@ -624,13 +738,13 @@ add_filter('woocommerce_breadcrumb_home_url', 'woopaca_breadcrumb_home_url_is_sh
  * serialized value on that one product – so WooCommerce intentionally
  * doesn't support filtering by it.
  *
- * The two functions below add best-effort support for that anyway.
- * Because there's no real index to query against, matching is done
- * with a LIKE against the serialized _product_attributes postmeta
- * blob, which is slower than a proper taxonomy filter and, in rare
- * edge cases, could over-match if two different attributes on the
- * same product happen to share both a key and a value string
- * verbatim. For a store of any real size, converting these to global
+ * The two functions below add support for that anyway. Because
+ * there's no real index to query against, every published product's
+ * _product_attributes is read once (cached in a transient for an hour,
+ * cleared on product save) and turned into a value → product IDs map,
+ * which the archive query is then restricted to via post__in. That's
+ * exact, but still heavier than a taxonomy filter. For a store of any
+ * real size, converting these to global
  * attributes (Products → Attributes, then re-select them on each
  * product) is the more scalable, WooCommerce-native path – the
  * existing layered-nav filter in shop-sidebar.php will then pick them
@@ -638,14 +752,14 @@ add_filter('woocommerce_breadcrumb_home_url', 'woopaca_breadcrumb_home_url_is_sh
  */
 function woopaca_get_local_product_attributes()
 {
-    $cached = get_transient('woopaca_local_product_attributes');
+    $cached = get_transient('woopaca_local_product_attributes_v2');
     if (false !== $cached) {
         return $cached;
     }
 
     global $wpdb;
-    $rows = $wpdb->get_col(
-        "SELECT pm.meta_value FROM {$wpdb->postmeta} pm
+    $rows = $wpdb->get_results(
+        "SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm
          INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
          WHERE pm.meta_key = '_product_attributes'
          AND p.post_type = 'product'
@@ -655,13 +769,13 @@ function woopaca_get_local_product_attributes()
     $attributes = array();
 
     foreach ($rows as $row) {
-        $data = maybe_unserialize($row);
+        $data = maybe_unserialize($row->meta_value);
         if (!is_array($data)) {
             continue;
         }
 
         foreach ($data as $key => $attr) {
-            if (!empty($attr['is_taxonomy'])) {
+            if (!is_array($attr) || !empty($attr['is_taxonomy'])) {
                 continue; // Global attribute – already handled by shop-sidebar.php.
             }
 
@@ -670,23 +784,31 @@ function woopaca_get_local_product_attributes()
             $values = isset($attr['value']) ? array_map('trim', explode('|', $attr['value'])) : array();
 
             if (!isset($attributes[$key])) {
-                $attributes[$key] = array('label' => $label, 'values' => array());
+                $attributes[$key] = array('label' => $label, 'values' => array(), 'products' => array());
             }
 
             foreach ($values as $value) {
-                if ('' !== $value && !in_array($value, $attributes[$key]['values'], true)) {
+                if ('' === $value) {
+                    continue;
+                }
+                if (!in_array($value, $attributes[$key]['values'], true)) {
                     $attributes[$key]['values'][] = $value;
                 }
+                // value => list of product IDs that have it, used by
+                // woopaca_filter_products_by_local_attributes() below.
+                $attributes[$key]['products'][$value][] = (int) $row->post_id;
             }
         }
     }
 
     foreach ($attributes as &$attribute) {
-        sort($attribute['values']);
+        // Natural order, so sizes like 8, 9, 10, 12 don't come out as
+        // 10, 12, 8, 9.
+        sort($attribute['values'], SORT_NATURAL | SORT_FLAG_CASE);
     }
     unset($attribute);
 
-    set_transient('woopaca_local_product_attributes', $attributes, HOUR_IN_SECONDS);
+    set_transient('woopaca_local_product_attributes_v2', $attributes, HOUR_IN_SECONDS);
 
     return $attributes;
 }
@@ -694,13 +816,21 @@ function woopaca_get_local_product_attributes()
 // Keep the aggregated list fresh whenever a product is edited, instead
 // of waiting up to an hour for the transient to expire.
 add_action('save_post_product', function () {
-    delete_transient('woopaca_local_product_attributes');
+    delete_transient('woopaca_local_product_attributes_v2');
 });
 
 /**
  * Applies the ?local_attr[attribute-key][]=value query args (built by
- * the checkboxes in shop-sidebar.php) as a meta_query on the shop /
- * category / tag archive.
+ * the filter boxes in shop-sidebar.php) to the shop / category / tag
+ * archive.
+ *
+ * Matching is exact, against the product IDs collected per value in
+ * woopaca_get_local_product_attributes(). The previous approach – two
+ * LIKE '%...%' clauses against the serialized _product_attributes
+ * blob – matched far too much: a short value like "S", "M", "L" or
+ * "2" occurs inside the serialized structure of practically every
+ * product ("is_visible", "name", "s:5:"...), so filtering on a size
+ * returned nearly every product that had that attribute at all.
  */
 function woopaca_filter_products_by_local_attributes($query)
 {
@@ -716,51 +846,41 @@ function woopaca_filter_products_by_local_attributes($query)
         return;
     }
 
-    $meta_query = $query->get('meta_query');
-    if (!is_array($meta_query)) {
-        $meta_query = array();
-    }
+    $local_attributes = woopaca_get_local_product_attributes();
+    $matching_ids     = null;
 
-    foreach ($_GET['local_attr'] as $attr_key => $values) {
-        $attr_key = sanitize_title(wp_unslash($attr_key));
-        $values = array_map('sanitize_text_field', (array) wp_unslash($values));
-        $values = array_filter($values, 'strlen');
+    foreach (wp_unslash($_GET['local_attr']) as $attr_key => $values) {
+        $attr_key = sanitize_title($attr_key);
+        $values = array_filter(array_map('sanitize_text_field', array_filter((array) $values, 'is_string')), 'strlen');
 
         if (empty($values)) {
             continue;
         }
 
-        $value_clauses = array('relation' => 'OR');
+        // OR within one attribute (Red or Blue)...
+        $ids_for_attribute = array();
         foreach ($values as $value) {
-            // WordPress's meta_query LIKE comparison runs the value
-            // through $wpdb->esc_like() before wrapping it in %...%,
-            // which escapes any % we put in ourselves – so a single
-            // clause with our own wildcards (e.g. '"key"%"value"%Term')
-            // never actually matches anything; the % becomes a literal
-            // character to search for. Instead, require two separate
-            // literal substrings – the attribute key and the value
-            // text – to both be present, ANDed together.
-            $value_clauses[] = array(
-                'relation' => 'AND',
-                array(
-                    'key' => '_product_attributes',
-                    'value' => '"' . $attr_key . '"',
-                    'compare' => 'LIKE',
-                ),
-                array(
-                    'key' => '_product_attributes',
-                    'value' => $value,
-                    'compare' => 'LIKE',
-                ),
-            );
+            if (!empty($local_attributes[$attr_key]['products'][$value])) {
+                $ids_for_attribute = array_merge($ids_for_attribute, $local_attributes[$attr_key]['products'][$value]);
+            }
         }
-        $meta_query[] = $value_clauses;
+
+        // ...AND across attributes (Red/Blue AND size M).
+        $matching_ids = null === $matching_ids
+            ? array_unique($ids_for_attribute)
+            : array_intersect($matching_ids, $ids_for_attribute);
     }
 
-    if (count($meta_query) > 1 && !isset($meta_query['relation'])) {
-        $meta_query['relation'] = 'AND';
+    if (null === $matching_ids) {
+        return;
     }
 
-    $query->set('meta_query', $meta_query);
+    $existing = $query->get('post__in');
+    if (!empty($existing)) {
+        $matching_ids = array_intersect($matching_ids, array_map('intval', (array) $existing));
+    }
+
+    // array(0) = "no matches" (an empty post__in would mean "no restriction").
+    $query->set('post__in', $matching_ids ? array_values($matching_ids) : array(0));
 }
 add_action('pre_get_posts', 'woopaca_filter_products_by_local_attributes');

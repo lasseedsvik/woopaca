@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         layout.classList.toggle('shop-filter-loading', isLoading);
     }
 
-    function afterSwap(url, title) {
+    function afterSwap(url, title, isHistoryNavigation) {
         // WooCommerce's own price-slider script listens for this event
         // on document.body to (re)initialize any .price_slider element
         // present in the DOM – needed since the slider we just inserted
@@ -36,14 +36,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         document.title = title;
-        window.history.pushState({ shopFilterAjax: true }, title, url);
+        // Only add a history entry for a new filter click. When the
+        // swap was caused by Back/Forward (popstate), the browser has
+        // already moved to this URL – pushing it again used to wipe the
+        // forward history and add a duplicate entry, so the Back button
+        // got stuck cycling between filter states and never left the
+        // shop page.
+        if (!isHistoryNavigation) {
+            window.history.pushState({ shopFilterAjax: true }, title, url);
+        }
         setLoading(false);
 
         var top = layout.getBoundingClientRect().top + window.pageYOffset - 32;
         window.scrollTo({ top: top, behavior: 'smooth' });
     }
 
-    function loadUrl(url) {
+    function loadUrl(url, isHistoryNavigation) {
         setLoading(true);
 
         fetch(url, { credentials: 'same-origin' })
@@ -80,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     el.classList.add('reveal-visible');
                 });
 
-                afterSwap(url, doc.title);
+                afterSwap(url, doc.title, isHistoryNavigation);
             })
             .catch(function () {
                 // Something went wrong (offline, blocked request,
@@ -120,7 +128,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function submitPriceFilterForm(form) {
         var params = new URLSearchParams(new FormData(form));
         var action = form.getAttribute('action') || window.location.pathname;
-        loadUrl(action + '?' + params.toString());
+        // With plain permalinks the widget's action already carries a
+        // query string (?post_type=product) – don't add a second "?".
+        loadUrl(action + (action.indexOf('?') === -1 ? '?' : '&') + params.toString());
     }
 
     document.addEventListener('submit', function (e) {
@@ -146,8 +156,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Mark the initial page as one of ours, so going Back to it after a
+    // filter change re-renders it too.
+    window.history.replaceState({ shopFilterAjax: true }, document.title, window.location.href);
+
     // Back/forward after an AJAX filter change.
-    window.addEventListener('popstate', function () {
-        loadUrl(window.location.href);
+    window.addEventListener('popstate', function (e) {
+        if (!e.state || !e.state.shopFilterAjax) {
+            return;
+        }
+        loadUrl(window.location.href, true);
     });
 });

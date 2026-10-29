@@ -22,7 +22,7 @@ get_header(); ?>
     <main id="woopaca-main-content" class="site-main woocommerce-main">
         <div class="container shop-layout">
 
-            <aside class="shop-sidebar" aria-label="<?php esc_attr_e('Filtrera produkter', 'woopaca'); ?>">
+            <aside class="shop-sidebar" aria-label="<?php esc_attr_e('Filter products', 'woopaca'); ?>">
                 <?php wc_get_template('shop-sidebar.php'); ?>
             </aside>
 

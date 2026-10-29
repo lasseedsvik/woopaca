@@ -39,7 +39,7 @@
 
 						<div class="post-meta">
 
-							<span class="post-date"><?php echo esc_html(get_theme_mod('blog_post_published_label', 'Publicerad:')); ?> <?php the_time(get_option('date_format')); ?></span>
+							<span class="post-date"><?php echo esc_html(woopaca_mod('blog_post_published_label', __('Published:', 'woopaca'))); ?> <?php the_time(get_option('date_format')); ?></span>
 
 						</div>
 
@@ -60,11 +60,11 @@
 							$blog_page_url = $blog_page_id ? get_permalink($blog_page_id) : home_url('/blogg');
 							?>
 
-							<a href="<?php echo esc_url($blog_page_url); ?>" onclick="goBackOrHome(event)"><img alt="WooPaca" class="logo-main icon"
+							<a href="<?php echo esc_url($blog_page_url); ?>" onclick="goBackOrHome(event)"><img alt="" class="logo-main icon"
 
 									src="<?php echo get_template_directory_uri(); ?>/assets/images/blog.svg">
 
-								<?php echo esc_html(get_theme_mod('blog_post_back_label', 'Tillbaka!')); ?></a>
+								<?php echo esc_html(woopaca_mod('blog_post_back_label', __('Back!', 'woopaca'))); ?></a>
 
 
 
@@ -72,7 +72,16 @@
 
 								function goBackOrHome(event) {
 
-									if (document.referrer) {
+									// Only go "back" if the visitor actually came from
+									// this site – otherwise (e.g. arriving from Google or
+									// Facebook) history.back() would send them off the
+									// site instead of to the blog.
+									var cameFromThisSite = false;
+									try {
+										cameFromThisSite = document.referrer && new URL(document.referrer).origin === window.location.origin;
+									} catch (e) {}
+
+									if (cameFromThisSite) {
 
 										event.preventDefault();
 
@@ -99,7 +108,7 @@
 
 			<aside class="single-sidebar">
 
-				<h3 class="sidebar-title"><?php echo esc_html(get_theme_mod('blog_sidebar_heading', 'Latest posts!')); ?></h3>
+				<h3 class="sidebar-title"><?php echo esc_html(woopaca_mod('blog_sidebar_heading', __('Latest posts!', 'woopaca'))); ?></h3>
 
 				<ul class="sidebar-post-list">
 
@@ -177,7 +186,7 @@
 
 					else:
 
-						echo '<li>Inga andra inlägg hittades.</li>';
+						echo '<li>' . esc_html__('No other posts found.', 'woopaca') . '</li>';
 
 					endif;
 
@@ -186,13 +195,13 @@
 					<li class="sidebar-post-item sidebar-post-item-return">
 
 						<a href="<?php echo esc_url($blog_page_url); ?>">
-							<img alt="WooPaca" class="logo-main icon sidebar-post-item-return-icon"
+							<img alt="" class="logo-main icon sidebar-post-item-return-icon"
 								src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/blog.svg'); ?>">
 						</a>
 
 						<h4>
 
-							<a href="<?php echo esc_url($blog_page_url); ?>"><?php echo esc_html(get_theme_mod('blog_sidebar_see_all_label', 'See all posts!')); ?></a>
+							<a href="<?php echo esc_url($blog_page_url); ?>"><?php echo esc_html(woopaca_mod('blog_sidebar_see_all_label', __('See all posts!', 'woopaca'))); ?></a>
 
 						</h4>
 

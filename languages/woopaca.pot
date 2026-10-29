@@ -1,0 +1,209 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WooPaca - WooCommerce Theme 2.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: woopaca\n"
+
+#: 404.php:34
+msgid "The page you're looking for couldn't be found."
+msgstr ""
+
+#: 404.php:38
+msgid "Back to homepage"
+msgstr ""
+
+#: 404.php:40
+msgid "Go to shop"
+msgstr ""
+
+#: front-page.php:45
+msgid "News"
+msgstr ""
+
+#: front-page.php:46
+msgid "From the store"
+msgstr ""
+
+#: front-page.php:63 woocommerce/shop-sidebar.php:53
+msgid "Show all products"
+msgstr ""
+
+#: front-page.php:86
+msgid "Latest from the blog!"
+msgstr ""
+
+#: front-page.php:123
+msgid "See all posts here!"
+msgstr ""
+
+#: functions.php:33
+msgid "Mainmenu"
+msgstr ""
+
+#: functions.php:126 header.php:179
+msgid "Open menu"
+msgstr ""
+
+#: functions.php:127
+msgid "Close menu"
+msgstr ""
+
+#: functions.php:128
+msgid "Show submenu"
+msgstr ""
+
+#: functions.php:129
+msgid "Hide submenu"
+msgstr ""
+
+#: functions.php:179 functions.php:264
+msgid "We are using cookies to improve your experience!"
+msgstr ""
+
+#: functions.php:180 functions.php:274
+msgid "Read more"
+msgstr ""
+
+#: functions.php:182 functions.php:295
+msgid "Accept"
+msgstr ""
+
+#: functions.php:183 functions.php:305
+msgid "Decline"
+msgstr ""
+
+#: header.php:174
+msgid "Skip to content"
+msgstr ""
+
+#: header.php:211
+msgid "Search"
+msgstr ""
+
+#: header.php:220
+msgid "Search products…"
+msgstr ""
+
+#: header.php:220
+msgid "Search products"
+msgstr ""
+
+#: header.php:222
+msgid "Close search"
+msgstr ""
+
+#: header.php:232
+msgid "My account"
+msgstr ""
+
+#: header.php:236
+msgid "Cart"
+msgstr ""
+
+#: header.php:248
+msgid "Visit the shop"
+msgstr ""
+
+#: home.php:19
+msgid "Choose page"
+msgstr ""
+
+#: home.php:22
+msgid "Go to page…"
+msgstr ""
+
+#: home.php:32
+#, php-format
+msgid "Page %d"
+msgstr ""
+
+#: home.php:53
+msgid "Welcome to the blog!"
+msgstr ""
+
+#: home.php:63
+msgid "Here you'll find our latest blog posts!"
+msgstr ""
+
+#: home.php:115
+msgid "Previous"
+msgstr ""
+
+#: home.php:116
+msgid "Next"
+msgstr ""
+
+#: inc/woocommerce.php:488
+msgid "No products found."
+msgstr ""
+
+#: inc/woocommerce.php:585 inc/woocommerce.php:619
+msgid "Are you sure you want to empty the cart?"
+msgstr ""
+
+#: inc/woocommerce.php:592 inc/woocommerce.php:620
+msgid "Empty cart!"
+msgstr ""
+
+#: inc/woocommerce.php:688
+msgid "Go to page"
+msgstr ""
+
+#: inc/woocommerce.php:695
+#, php-format
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: inc/woocommerce.php:715
+msgid "Shop"
+msgstr ""
+
+#: single.php:31
+msgid "Pages:"
+msgstr ""
+
+#: single.php:42
+msgid "Published:"
+msgstr ""
+
+#: single.php:67
+msgid "Back!"
+msgstr ""
+
+#: single.php:111
+msgid "Latest posts!"
+msgstr ""
+
+#: single.php:189
+msgid "No other posts found."
+msgstr ""
+
+#: single.php:204
+msgid "See all posts!"
+msgstr ""
+
+#: woocommerce/archive-product.php:25
+msgid "Filter products"
+msgstr ""
+
+#: woocommerce/shop-sidebar.php:37
+msgid "Categories"
+msgstr ""
+
+#: woocommerce/shop-sidebar.php:98
+msgid "Filter by price"
+msgstr ""
+
+#: woocommerce/shop-sidebar.php:277
+msgid "Reset all"
+msgstr ""
+
+#: woocommerce/single-product/add-to-cart/variable.php:34
+msgid "This product is out of stock."
+msgstr ""
+
+#: woocommerce/single-product/add-to-cart/variable.php:96
+msgid "Reset"
+msgstr ""

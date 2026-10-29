@@ -9,8 +9,26 @@
  */
 require get_template_directory() . '/inc/woocommerce.php';
 
+/**
+ * get_theme_mod() with a fallback that also applies when a Customizer
+ * text field has been saved EMPTY. get_theme_mod()'s own $default only
+ * kicks in when the setting has never been saved at all, so clearing a
+ * field used to leave an empty heading/button instead of the fallback
+ * the field's description promises.
+ */
+function woopaca_mod($name, $fallback = '')
+{
+    $value = get_theme_mod($name, $fallback);
+
+    return ('' === $value || null === $value) ? $fallback : $value;
+}
+
 function woopaca_setup()
 {
+    // Text Domain in style.css is "woopaca" – translations (.mo files in
+    // /languages) are loaded under that domain.
+    load_theme_textdomain('woopaca', get_template_directory() . '/languages');
+
     register_nav_menus(array(
         'primary' => esc_html__('Mainmenu', 'woopaca'),
     ));
@@ -40,20 +58,39 @@ function woopaca_add_google_analytics()
 {
     $ga_id = get_theme_mod('google_analytics_id', '');
 
-    if (!empty($ga_id)) {
-        ?>
-
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr($ga_id); ?>"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag('js', new Date());
-
-            gtag('config', '<?php echo esc_js($ga_id); ?>');
-        </script>
-        <?php
+    if (empty($ga_id)) {
+        return;
     }
+
+    // Google Analytics is only loaded once the visitor has clicked
+    // "Accept" in the cookie banner (site_cookie_consent=1). It used to
+    // be printed unconditionally, so GA set its cookies and sent data
+    // even for visitors who clicked "Decline" – which is exactly what
+    // GDPR/the Swedish LEK requires consent for.
+    //
+    // The check runs in the browser rather than in PHP so it still
+    // works when a cache plugin/CDN serves the same HTML to everyone.
+    // woopacaLoadAnalytics() is also called by the banner's accept
+    // button, so tracking starts immediately without a reload.
+    ?>
+    <script>
+        window.woopacaLoadAnalytics = function () {
+            if (window.woopacaAnalyticsLoaded) { return; }
+            window.woopacaAnalyticsLoaded = true;
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(<?php echo wp_json_encode($ga_id); ?>);
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { dataLayer.push(arguments); };
+            gtag('js', new Date());
+            gtag('config', <?php echo wp_json_encode($ga_id); ?>);
+        };
+        if (/(?:^|;\s*)site_cookie_consent=1(?:;|$)/.test(document.cookie)) {
+            window.woopacaLoadAnalytics();
+        }
+    </script>
+    <?php
 }
 add_action('wp_head', 'woopaca_add_google_analytics', 10);
 
@@ -82,13 +119,15 @@ function woopaca_scripts()
         woopaca_asset_version('/assets/js/menu.js'),
         true
     );
-    wp_enqueue_script(
-        'woopaca-menu-toggle',
-        get_template_directory_uri() . '/assets/js/menu-toggle.js',
-        array(),
-        woopaca_asset_version('/assets/js/menu-toggle.js'),
-        true
-    );
+    // (menu.js alone handles the hamburger button. A second script,
+    // menu-toggle.js, used to be loaded too and flipped aria-expanded
+    // back on every click – it has been removed.)
+    wp_localize_script('woopaca-menu', 'woopacaMenuL10n', array(
+        'openMenu'    => __('Open menu', 'woopaca'),
+        'closeMenu'   => __('Close menu', 'woopaca'),
+        'showSubmenu' => __('Show submenu', 'woopaca'),
+        'hideSubmenu' => __('Hide submenu', 'woopaca'),
+    ));
     wp_enqueue_script(
         'woopaca-reveal',
         get_template_directory_uri() . '/assets/js/reveal.js',
@@ -112,18 +151,39 @@ remove_action('wp_footer', 'wp_enqueue_global_styles');
 remove_filter('the_content', 'wpautop');
 remove_filter('the_excerpt', 'wpautop');
 
+/**
+ * ...except for WooCommerce products. Product descriptions are written
+ * in the classic (TinyMCE) editor, which saves paragraphs as plain line
+ * breaks and relies on wpautop to turn them into <p> tags on output –
+ * with wpautop removed globally, every product description collapsed
+ * into one long paragraph. (Block-editor content isn't affected either
+ * way: WordPress already skips wpautop for content that has blocks.)
+ */
+function woopaca_wpautop_for_products($content)
+{
+    if ('product' === get_post_type() && !has_blocks($content)) {
+        return wpautop($content);
+    }
+
+    return $content;
+}
+add_filter('the_content', 'woopaca_wpautop_for_products', 10);
+
 
 function woopaca_cookie_banner()
 {
-    if (!isset($_COOKIE['site_cookie_consent'])) {
-
-        $cookie_text = get_theme_mod('cookie_banner_text', 'We are using cookies fo improve your experience!');
-        $link_text = get_theme_mod('cookie_banner_link_text', 'Read more');
-        $link_url = get_theme_mod('cookie_banner_link_url', '/privacy-policy');
-        $accept_text = get_theme_mod('cookie_banner_accept_text', 'Acceptera');
-        $decline_text = get_theme_mod('cookie_banner_decline_text', 'Neka');
+    // Always rendered, hidden, and only revealed by the script below if
+    // no choice has been stored yet. Checking $_COOKIE in PHP instead
+    // breaks as soon as a page cache is involved (the banner is then
+    // either cached into every page or cached away for everyone).
+        $cookie_text = woopaca_mod('cookie_banner_text', __('We are using cookies to improve your experience!', 'woopaca'));
+        $link_text = get_theme_mod('cookie_banner_link_text', __('Read more', 'woopaca'));
+        $link_url = get_theme_mod('cookie_banner_link_url', '/integritetspolicy');
+        $accept_text = woopaca_mod('cookie_banner_accept_text', __('Accept', 'woopaca'));
+        $decline_text = woopaca_mod('cookie_banner_decline_text', __('Decline', 'woopaca'));
         ?>
-        <div id="cookie-banner"
+        <style>#cookie-banner[hidden]{display:none !important}</style>
+        <div id="cookie-banner" hidden
             style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0d0d0d;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.1);">
             <p style="margin:0;font-size:14px;"><?php echo nl2br(esc_html($cookie_text)); ?>
                 <?php if (!empty($link_text) && !empty($link_url)) : ?>
@@ -143,16 +203,21 @@ function woopaca_cookie_banner()
         </div>
         <script>
             function dmAcceptCookies() {
-                document.cookie = "site_cookie_consent=1;path=/;max-age=" + (60 * 60 * 24 * 365);
-                document.getElementById('cookie-banner').style.display = 'none';
+                document.cookie = "site_cookie_consent=1;path=/;max-age=" + (60 * 60 * 24 * 365) + ";SameSite=Lax";
+                document.getElementById('cookie-banner').hidden = true;
+                if (typeof window.woopacaLoadAnalytics === 'function') {
+                    window.woopacaLoadAnalytics();
+                }
             }
             function dmDeclineCookies() {
-                document.cookie = "site_cookie_consent=0;path=/;max-age=" + (60 * 60 * 24 * 365);
-                document.getElementById('cookie-banner').style.display = 'none';
+                document.cookie = "site_cookie_consent=0;path=/;max-age=" + (60 * 60 * 24 * 365) + ";SameSite=Lax";
+                document.getElementById('cookie-banner').hidden = true;
+            }
+            if (!/(?:^|;\s*)site_cookie_consent=/.test(document.cookie)) {
+                document.getElementById('cookie-banner').hidden = false;
             }
         </script>
         <?php
-    }
 }
 add_action('wp_footer', 'woopaca_cookie_banner');
 
@@ -196,7 +261,7 @@ function woopaca_customize_register_cookie_banner(WP_Customize_Manager $wp_custo
     ));
 
     $wp_customize->add_setting('cookie_banner_text', array(
-        'default' => 'We are using cookies to improve your experience!',
+        'default' => __('We are using cookies to improve your experience!', 'woopaca'),
         'sanitize_callback' => 'sanitize_textarea_field',
     ));
     $wp_customize->add_control('cookie_banner_text', array(
@@ -206,7 +271,7 @@ function woopaca_customize_register_cookie_banner(WP_Customize_Manager $wp_custo
     ));
 
     $wp_customize->add_setting('cookie_banner_link_text', array(
-        'default' => 'Read more',
+        'default' => __('Read more', 'woopaca'),
         'sanitize_callback' => 'sanitize_text_field',
     ));
     $wp_customize->add_control('cookie_banner_link_text', array(
@@ -227,7 +292,7 @@ function woopaca_customize_register_cookie_banner(WP_Customize_Manager $wp_custo
     ));
 
     $wp_customize->add_setting('cookie_banner_accept_text', array(
-        'default' => 'Acceptera',
+        'default' => __('Accept', 'woopaca'),
         'sanitize_callback' => 'sanitize_text_field',
     ));
     $wp_customize->add_control('cookie_banner_accept_text', array(
@@ -237,7 +302,7 @@ function woopaca_customize_register_cookie_banner(WP_Customize_Manager $wp_custo
     ));
 
     $wp_customize->add_setting('cookie_banner_decline_text', array(
-        'default' => 'Neka',
+        'default' => __('Decline', 'woopaca'),
         'sanitize_callback' => 'sanitize_text_field',
     ));
     $wp_customize->add_control('cookie_banner_decline_text', array(
@@ -295,7 +360,11 @@ class woopaca_Nav_Menu_Walker extends Walker_Nav_Menu
         }
 
         $output .= '<li class="' . implode(' ', $classes) . '">';
-        $output .= '<a class="nav-link" href="' . esc_attr($item->url) . '">';
+        $output .= '<a class="nav-link" href="' . esc_url($item->url) . '"'
+            . (!empty($item->target) ? ' target="' . esc_attr($item->target) . '"' : '')
+            . (!empty($item->xfn) ? ' rel="' . esc_attr($item->xfn) . '"' : '')
+            . (!empty($item->current) ? ' aria-current="page"' : '')
+            . '>';
         $output .= esc_html($item->title);
         // Only top-level items get the visible dropdown arrow – nested
         // submenu items with their own children (rare, but possible)

@@ -27,8 +27,8 @@
 			} else if ( wrapper ) {
 				img = document.createElement( 'img' );
 				img.id = 'blog-avatar-img';
-				img.alt = 'WooPaca';
-				img.className = 'logo-main thomas-avatar';
+				img.alt = '';
+				img.className = 'logo-main blog-avatar';
 				img.src = newUrl;
 				wrapper.insertBefore( img, wrapper.firstChild );
 			}

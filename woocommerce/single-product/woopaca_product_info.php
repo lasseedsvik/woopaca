@@ -30,4 +30,6 @@ global $product;
     <?php woocommerce_template_single_excerpt(); ?>
 
     <?php woocommerce_template_single_add_to_cart(); ?>
+
+    <?php woopaca_product_info_price_fallback(); ?>
 </div>

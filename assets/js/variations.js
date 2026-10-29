@@ -47,25 +47,39 @@ jQuery(function ($) {
             return;
         }
 
-        var name  = $radio.attr('name');
-        var value = $radio.val();
-        var $form = $radio.closest('.variations_form');
+        var name    = $radio.attr('name');
+        var value   = $radio.val();
+        var $form   = $radio.closest('.variations_form');
+        var $group  = $radio.closest('.dm-attribute-group');
+        var $select = $form.find('select[name="' + name + '"]');
+
+        // Re-clicking the value that's already selected changes
+        // nothing – don't wipe the groups below it.
+        if ($select.val() === value) {
+            updateSelectedVisual($form);
+            return;
+        }
+
+        // Clear everything further down the chain FIRST. While a
+        // later attribute still holds a value, WooCommerce's own
+        // script (for products with ≤30 variations) has removed every
+        // <option> from this group's <select> that doesn't combine
+        // with that later value – so setting the new value before
+        // clearing would silently fail (.val() can't select an option
+        // that isn't there). Clearing first makes WooCommerce rebuild
+        // this select with every option that's valid given only the
+        // groups ABOVE it.
+        clearGroupsAfter($form, $group);
 
         // Manually enforce radio-group exclusivity and the checked
         // state ourselves, rather than relying on the browser's
         // native label-click behavior to have done it already by the
         // time this runs.
         $form.find('input[name="' + name + '"]').prop('checked', false);
-        $radio.prop('checked', true).prop('disabled', false);
+        $radio.prop('checked', true);
 
-        $form.find('select[name="' + name + '"]').val(value).trigger('change');
+        $select.val(value).trigger('change');
 
-        // A new choice was made in this group – anything selected
-        // further down the chain no longer necessarily matches a
-        // valid combination, so it's cleared and only the next
-        // attribute in line is revealed again.
-        var $group = $radio.closest('.dm-attribute-group');
-        clearGroupsAfter($form, $group);
         updateCascade($form);
         updateSelectedVisual($form);
         updateAvailability($form);
@@ -82,9 +96,11 @@ jQuery(function ($) {
     // load). Handling the click directly removes that dependency for
     // mouse/touch use.
     $(document).on('click', '.dm-attribute-box', function (e) {
-        var $box   = $(this);
-        var forId  = $box.attr('for');
-        var $radio = forId ? $('#' + forId.replace(/([:.\[\],])/g, '\\$1')) : $();
+        // getElementById instead of a '#id' jQuery selector: ids can
+        // contain characters (e.g. '%' from sanitize_title() on
+        // non-ASCII option values) that break CSS selector parsing.
+        var forId  = $(this).attr('for');
+        var $radio = $(forId ? document.getElementById(forId) : null);
 
         if (!$radio.length || $radio.prop('disabled')) {
             return;
@@ -110,6 +126,55 @@ jQuery(function ($) {
         updateCascade($form);
         updateSelectedVisual($form);
         updateAvailability($form);
+    });
+
+    /**
+     * Single price display for variable products.
+     *
+     * The theme prints the product's price next to the quantity field
+     * (.product-info-price, see woopaca_product_info_price_after_quantity()
+     * in inc/woocommerce.php). For a variable product that's the full
+     * range ("199 kr – 499 kr"), and WooCommerce ALSO printed the chosen
+     * variation's price above the button – two prices, one of them never
+     * changing. Instead, the range is swapped for the chosen variation's
+     * price here, and WooCommerce's own copy is hidden in woocommerce.css
+     * (.variations_form .woocommerce-variation-price).
+     *
+     * When every variation costs the same, WooCommerce sends an empty
+     * price_html – the range then already IS that single price, so it's
+     * simply left alone.
+     */
+    function getPriceBox($form) {
+        var $box = $form.find('.product-info-price');
+        if ($box.length && typeof $box.data('dmDefaultPrice') === 'undefined') {
+            $box.data('dmDefaultPrice', $box.html());
+        }
+        return $box;
+    }
+
+    $(document).on('found_variation', '.variations_form', function (event, variation) {
+        var $box = getPriceBox($(this));
+        if ($box.length && variation && variation.price_html) {
+            $box.html(variation.price_html);
+        }
+    });
+
+    $(document).on('reset_data hide_variation', '.variations_form', function () {
+        var $box = getPriceBox($(this));
+        if ($box.length) {
+            $box.html($box.data('dmDefaultPrice'));
+        }
+    });
+
+    // WooCommerce moves focus to the first <select> after "Reset",
+    // but those selects are hidden (inert) here – move focus to the
+    // first visible option box instead so keyboard users aren't
+    // dropped back at the top of the page.
+    $(document).on('click', '.variations_form .reset_variations', function () {
+        var $form = $(this).closest('.variations_form');
+        window.setTimeout(function () {
+            $form.find('.dm-attribute-group:not(.dm-attribute-hidden) .dm-attribute-radio:not(:disabled)').first().trigger('focus');
+        }, 0);
     });
 
     // Safety net: WooCommerce fires this every time it finishes
@@ -214,9 +279,14 @@ jQuery(function ($) {
 
     /**
      * Grays out (and disables) every option box that can't lead to an
-     * actual, orderable variation given what's already selected in
-     * the OTHER attribute groups. An attribute that hasn't been
-     * selected yet doesn't constrain anything.
+     * actual, orderable variation given what's selected in the
+     * attribute groups ABOVE it. Groups below it are deliberately
+     * ignored: in the cascade, picking a new value in a group clears
+     * everything below it anyway, so a later selection must never
+     * lock the visitor out of changing an earlier one. (Previously
+     * every other group was taken into account, so after e.g. Red + M
+     * the "Blue" box was grayed out and the only way to switch color
+     * was the Reset link.)
      */
     function updateAvailability($form) {
         var variations = getVariations($form);
@@ -226,8 +296,12 @@ jQuery(function ($) {
             return;
         }
 
+        var precedingNames = [];
+
         $form.find('.dm-attribute-group').each(function () {
             var attrName    = $(this).data('attribute_name');
+            var constraints = precedingNames.slice();
+            precedingNames.push(attrName);
             var $ownSelect  = getSelectForGroup($form, $(this));
             var ownValue    = $ownSelect.length ? $ownSelect.val() : '';
 
@@ -254,7 +328,10 @@ jQuery(function ($) {
                 var isAvailable = variations.some(function (variation) {
                     var varAttrs = variation.attributes || {};
 
-                    if (variation.variation_is_visible === false) {
+                    // variation_is_active is what WooCommerce itself
+                    // uses to disable an <option> (e.g. out of stock
+                    // with "Hide out of stock items" turned on).
+                    if (variation.variation_is_visible === false || variation.variation_is_active === false) {
                         return false;
                     }
 
@@ -262,8 +339,9 @@ jQuery(function ($) {
                         return false;
                     }
 
-                    for (var otherName in selections) {
-                        if (otherName === attrName || !selections[otherName]) {
+                    for (var c = 0; c < constraints.length; c++) {
+                        var otherName = constraints[c];
+                        if (!selections[otherName]) {
                             continue;
                         }
                         if (!valuesMatch(varAttrs[otherName], selections[otherName])) {

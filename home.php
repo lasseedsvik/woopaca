@@ -16,10 +16,10 @@
             ?>
 
             <div class="page-dropdown-container">
-                <label for="page-select" class="screen-reader-text">Choose page</label>
+                <label for="page-select" class="screen-reader-text"><?php esc_html_e('Choose page', 'woopaca'); ?></label>
                 <select id="page-select" onchange="if (this.value) window.location.href = this.value;">
 
-                    <option value="">Go to page...</option>
+                    <option value=""><?php esc_html_e('Go to page…', 'woopaca'); ?></option>
                     <?php
                     for ($i = 1; $i <= $total_pages; $i++) {
 
@@ -29,7 +29,7 @@
                         // Mark the page we're currently on as 'selected'                
                         $selected = ($i == $current_page) ? 'selected' : '';
 
-                        echo '<option value="' . esc_url($page_link) . '" ' . $selected . '>Sida ' . $i . '</option>';
+                        echo '<option value="' . esc_url($page_link) . '" ' . $selected . '>' . esc_html(sprintf(__('Page %d', 'woopaca'), $i)) . '</option>';
                     }
 
                     ?>
@@ -50,7 +50,7 @@
                 <?php endif; ?>
 
                 <div class="welcome-text">
-                    <h2 id="blog-welcome-heading"><?php echo esc_html(get_theme_mod('blog_welcome_heading', 'Welcome to the blog!')); ?></h2>
+                    <h2 id="blog-welcome-heading"><?php echo esc_html(woopaca_mod('blog_welcome_heading', __('Welcome to the blog!', 'woopaca'))); ?></h2>
 
                     <div id="blog-welcome-text">
                         <?php
@@ -60,11 +60,7 @@
                             echo wp_kses_post(wpautop($welcome_text));
                         } else {
                             ?>
-                            <p>
-
-                                Here you'll find our latest blog posts!
-
-                            </p>
+                            <p><?php esc_html_e('Here you\'ll find our latest blog posts!', 'woopaca'); ?></p>
                             <?php
                         }
                         ?>
@@ -83,7 +79,12 @@
                     <?php if (has_post_thumbnail()): ?>
                         <div class="post-card-image">
                             <a href="<?php the_permalink(); ?>">
-                                <?php the_post_thumbnail('list-thumbnail'); ?>
+                                <?php
+                                // 'list-thumbnail' was never registered, so
+                                // WordPress fell back to the full-size
+                                // original upload for every card.
+                                the_post_thumbnail('medium_large');
+                                ?>
                             </a>
                         </div>
                     <?php endif; ?>
@@ -111,8 +112,8 @@
                 <?php
                 the_posts_pagination(array(
                     'mid_size' => 2,
-                    'prev_text' => '&laquo; Previous',
-                    'next_text' => 'Next &raquo;',
+                    'prev_text' => '&laquo; ' . esc_html__('Previous', 'woopaca'),
+                    'next_text' => esc_html__('Next', 'woopaca') . ' &raquo;',
                 ));
 
                 ?>

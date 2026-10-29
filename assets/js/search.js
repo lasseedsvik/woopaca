@@ -63,7 +63,7 @@ jQuery(function ($) {
         $results.empty();
 
         if (!items.length) {
-            $results.append('<p class="header-search-empty">Inga produkter hittades.</p>');
+            $results.append($('<p class="header-search-empty"></p>').text(woopacaSearch.noResults || 'No products found.'));
             $results.prop('hidden', false);
             return;
         }
@@ -107,7 +107,6 @@ jQuery(function ($) {
                 url: woopacaSearch.ajaxUrl,
                 data: {
                     action: 'woopaca_product_search',
-                    nonce: woopacaSearch.nonce,
                     term: term
                 },
                 dataType: 'json'
